@@ -17,7 +17,8 @@ The optional list variables can be used to copy, template or git clone a list of
 * `docker_deploy_templates` - list of templates
 * `docker_deploy_git_repositories` - to clone a list of repositories
 
-The `docker_deploy_git_repositories` can be use
+You can get the git version of the git of each `docker_deploy_git_repositories` by adding an attribute `fact` so the role define a new fact that could be used within the templates or within the compose.
+You can use a specific ssh key to clone the git repository if you define a `ssh_key`
 
 Dependencies
 ------------
@@ -35,7 +36,7 @@ Example 1:
     roles:
         - role: ansible-docker-deploy
           vars: 
-            docker_deploy_docker_compose_template: "path_to/docker-compose.yml"
+            docker_deploy_compose_template: "path_to/docker-compose.yml"
 ```
 
 Example 2:
@@ -44,7 +45,7 @@ Example 2:
   roles:
       - role: ansible-docker-deploy
         vars: 
-          docker_deploy_docker_compose_template: "path_to/docker-compose.yml"
+          docker_deploy_compose_template: "path_to/docker-compose.yml"
           docker_deploy_files:
             - src: "local_path/cert.key.pem"
               dest: "{{ docker_deploy_base_folder }}/cert.key.pem"
@@ -59,8 +60,8 @@ Example 3:
 
 group vars
 ```
-    docker_deploy_docker_compose_template: "path_to/docker-compose.yml"
-    docker_compose_git_repositories:
+    docker_deploy_compose_template: "path_to/docker-compose.yml"
+    docker_deploy_git_repositories:
     - repo: https://github.com/fccn/wp-nau-theme.git
       dest: "{{ wordpress_nau_theme_dest }}"
       version: "{{ wordpress_nau_theme_version | default('master') }}"
@@ -69,6 +70,7 @@ group vars
       group: www-data
       mode: u=rwX,g=rX,o=rX
       fact: wordpress_nau_theme_git_version
+      # ssh_key: "{{ SSH_KEY_CONTENT }}"
 ```
    
 playbook
@@ -78,6 +80,17 @@ playbook
         - ansible-docker-deploy
 ```
 
+Test this role
+-------
+
+To test the syntax run:
+```
+virtualenv venv
+. venv/bin/activate
+pip install ansible==2.7.12
+printf '[defaults]\nroles_path=../' >ansible.cfg
+ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+```
 
 License
 -------
