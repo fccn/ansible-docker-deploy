@@ -1,0 +1,136 @@
+---
+- name: Create root directory
+  file:
+    path: "{{ docker_deploy_base_folder }}"
+    state: directory
+
+- name: Install git
+  package: 
+    name: git
+    state: present
+  when: docker_deploy_git_repositories is defined and ( docker_deploy_git_repositories | length ) > 0
+
+- name: Install read-only ssh key
+  copy:
+    dest: "{{ item.dest + 'ssh_key' }}"
+    content: "{{ item.ssh_key }}"
+    mode: "0600"
+  no_log: True
+  with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
+  when: docker_deploy_git_repositories is defined
+
+- name: Update git repository source code
+  git: 
+    repo: "{{ item.repo }}"
+    dest: "{{ item.dest }}"
+    force: "{{ item.force | default(omit) }}"
+    version: "{{ item.version | default(omit) }}"
+    accept_hostkey: yes
+    key_file: "{{ ( item.dest + 'ssh_key' ) if item.ssh_key is defined else omit }}"
+  loop_control:
+    label: "{{ item.repo }}"
+  with_items: "{{ ( docker_deploy_git_repositories | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_git_repositories }}"
+  when: docker_deploy_git_repositories is defined
+  register: docker_deploy_git_repositories_out
+
+- name: Remove read-only ssh key
+  file:
+    dest: "{{ item.dest + 'ssh_key' }}"
+    state: absent
+  no_log: True
+  with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
+  when: docker_deploy_git_repositories is defined
+
+- name: Set permissions to git destination folders
+  file:
+    path: "{{ item.dest }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}" 
+    mode: "{{ item.mode }}"
+    recurse: yes
+  loop_control:
+    label: "{{ item.dest }}"
+  with_items: "{{ docker_deploy_git_repositories | selectattr('owner', 'defined') | list }}"
+  when: docker_deploy_git_repositories is defined
+
+- name: Define fact for each git repository update
+  set_fact:
+    "{{ item.0.fact }}": "{{ item.1.after }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.fact is defined
+  with_together:
+    - "{{ docker_deploy_git_repositories              | default( [] ) }}"
+    - "{{ docker_deploy_git_repositories_out.results  | default( [] ) }}"
+
+- name: create context directories
+  file:
+    dest: "{{ item.dest | dirname }}"
+    owner: "{{ item.dir_owner|default(omit) }}"
+    group: "{{ item.dir_group|default(omit) }}"
+    mode: "{{ item.dir_mode | default(omit) }}"
+    recurse: true
+    state: directory
+  with_items: "{{ docker_deploy_folders }}"
+
+- name: Copy files
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+  when: item.when | default(true) | bool
+  with_items: "{{ ( docker_deploy_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_files_out
+  tags: docker_compose
+
+- name: Template files
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    backup: "{{ item.backup | default(omit) }}"
+  when: item.when | default(true) | bool
+  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_templates_out
+  tags: docker_compose
+
+- name: Template docker-compose
+  template:
+    dest: "{{ docker_deploy_base_folder }}/docker-compose.yml"
+    src: "{{ docker_deploy_docker_compose_template }}"
+  when: docker_deploy_docker_compose_template is defined
+  register: docker_deploy_file
+
+- name: Remove old docker containers
+  docker_container: 
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ docker_containers_to_remove | default([]) }}"
+
+- name: Stop docker containers and remove its volumes
+  docker_service:
+    project_src: "{{ docker_deploy_base_folder }}"
+    state: absent
+    remove_volumes: true
+  when: docker_deploy_docker_compose_template is defined and ( docker_deploy_force_remove_volumes | default(false) )
+
+- name: Start docker containers
+  docker_service:
+    project_src: "{{ docker_deploy_base_folder }}"
+    services: "{{ limited_services.split(',') if limited_services is defined else omit }}"
+    # restart all containers if anything has changed
+    restarted: "{{ (docker_deploy_force_restart | default(false)) or docker_deploy_file.changed or docker_deploy_files_out.changed or docker_deploy_templates_out.changed or docker_deploy_git_repositories_out.changed }}"
+    pull: true # upgrade images prior to starting the application
+    build: true # always build images prior to starting the application
+    #recreate: always
+  when: docker_deploy_docker_compose_template is defined is defined
+  register: docker_deploy_output
