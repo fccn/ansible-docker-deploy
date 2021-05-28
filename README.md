@@ -1,7 +1,7 @@
 Ansible Docker Deploy
 =========
 
-Ansible utility role to easilly deploy a docker compose or stack. It copies, templates and git clones a repository and then deploys the software using docker compose or stack. This role doesn't install docker, compose or stack, it's only focus is the deployment process.
+Ansible utility role to easilly deploy a docker compose. It copies, templates and git clones a repository and then deploys the software using docker compose. This role doesn't install docker or compose, it's only focus is the deployment process.
 
 Requirements
 ------------
