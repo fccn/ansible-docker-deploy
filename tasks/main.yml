@@ -1,4 +1,14 @@
 ---
+- name: Verify presence of variables
+  fail:
+    msg: You need to define at least one of 'docker_deploy_stack_template' or 'docker_deploy_compose_template' variable.
+  when: docker_deploy_stack_template is defined or docker_deploy_compose_template is defined
+
+- name: Verify presence of variables
+  fail:
+    msg: You need to define the both 'docker_deploy_stack_name' and 'docker_deploy_stack_template'
+  when: docker_deploy_stack_name is not defined and docker_deploy_stack_template is defined
+
 - name: Create root directory
   file:
     path: "{{ docker_deploy_base_folder }}"
@@ -10,7 +20,7 @@
     state: present
   when: docker_deploy_git_repositories is defined and ( docker_deploy_git_repositories | length ) > 0
 
-- name: Install read-only ssh key
+- name: Install deployment ssh key
   copy:
     dest: "{{ item.dest + 'ssh_key' }}"
     content: "{{ item.ssh_key }}"
@@ -33,7 +43,7 @@
   when: docker_deploy_git_repositories is defined
   register: docker_deploy_git_repositories_out
 
-- name: Remove read-only ssh key
+- name: Remove deployment ssh key
   file:
     dest: "{{ item.dest + 'ssh_key' }}"
     state: absent
@@ -117,14 +127,14 @@
   with_items: "{{ docker_containers_to_remove | default([]) }}"
 
 - name: Stop docker containers and remove its volumes
-  docker_service: # docker_compose
+  docker_compose:
     project_src: "{{ docker_deploy_base_folder }}"
     state: absent
     remove_volumes: true
   when: docker_deploy_compose_template is defined and ( docker_deploy_force_remove_volumes | default(false) )
 
 - name: Start docker containers
-  docker_service: # docker_compose
+  docker_compose:
     project_src: "{{ docker_deploy_base_folder }}"
     services: "{{ limited_services.split(',') if limited_services is defined else omit }}"
     # restart all containers if anything has changed
@@ -134,3 +144,17 @@
     #recreate: always
   when: docker_deploy_compose_template is defined
   register: docker_deploy_output
+
+- name: Template docker stack
+  template:
+    dest: "{{ docker_deploy_base_folder }}/docker-stack.yml"
+    src: "{{ docker_deploy_stack_template }}"
+  when: docker_deploy_stack_template is defined
+  register: docker_deploy_stack_template_out
+
+- name: Start docker stack
+  docker_stack:
+    state: "{{ docker_deploy_stack_state | default('present') }}"
+    name: "{{ docker_deploy_stack_name }}"
+    compose:
+      - "{{ docker_deploy_base_folder }}/docker-stack.yml"

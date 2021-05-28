@@ -1,7 +1,7 @@
 Ansible Docker Deploy
 =========
 
-Ansible utility role to easilly deploy a docker compose. It copies, templates and git clones a repository and then deploys the software using docker compose. This role doesn't install docker or compose, it's only focus is the deployment process.
+Ansible utility role to easilly deploy a docker compose or stack. It copies, templates and git clones a repository and then deploys the software using docker compose. This role doesn't install docker or compose or stack, it's only focus is the deployment process.
 
 Requirements
 ------------
@@ -79,6 +79,32 @@ playbook
     roles:
         - ansible-docker-deploy
 ```
+
+Example 4:
+
+group vars
+```
+    docker_deploy_stack_template: "path_to/docker-stack.yml"
+    docker_deploy_stack_name: wordpress
+    docker_deploy_git_repositories:
+    - repo: https://github.com/fccn/wp-nau-theme.git
+      dest: "{{ wordpress_nau_theme_dest }}"
+      version: "{{ wordpress_nau_theme_version | default('master') }}"
+      force: true
+      owner: www-data
+      group: www-data
+      mode: u=rwX,g=rX,o=rX
+      fact: wordpress_nau_theme_git_version
+      # ssh_key: "{{ SSH_KEY_CONTENT }}"
+```
+   
+playbook
+```
+    hosts: servers
+    roles:
+        - ansible-docker-deploy
+```
+
 
 Test this role
 -------
