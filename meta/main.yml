@@ -1,6 +1,6 @@
 galaxy_info:
   author: Ivo Branco
-  description: Deploy docker compose or stack
+  description: Deploy docker compose
   company: FCT|FCCN
   issue_tracker_url: https://github.com/fccn/ansible-docker-deploy/issues
   license: GPL-3.0-only
@@ -9,5 +9,5 @@ galaxy_info:
     - deploy
     - docker
     - docker-compose
-    - docker-stack
+    #- docker-stack
 dependencies: []
