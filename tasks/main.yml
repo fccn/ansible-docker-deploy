@@ -2,7 +2,7 @@
 - name: Verify presence of variables
   fail:
     msg: You need to define at least one of 'docker_deploy_stack_template' or 'docker_deploy_compose_template' variable.
-  when: docker_deploy_stack_template is defined or docker_deploy_compose_template is defined
+  when: docker_deploy_stack_template is not defined and docker_deploy_compose_template is not defined
 
 - name: Verify presence of variables
   fail:
@@ -150,7 +150,7 @@
     dest: "{{ docker_deploy_base_folder }}/docker-stack.yml"
     src: "{{ docker_deploy_stack_template }}"
   when: docker_deploy_stack_template is defined
-  register: docker_deploy_stack_template_out
+  #register: docker_deploy_stack_template_out
 
 - name: Start docker stack
   docker_stack:
@@ -158,3 +158,4 @@
     name: "{{ docker_deploy_stack_name }}"
     compose:
       - "{{ docker_deploy_base_folder }}/docker-stack.yml"
+  when: docker_deploy_stack_template is defined
