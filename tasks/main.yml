@@ -152,6 +152,13 @@
   when: docker_deploy_stack_template is defined
   #register: docker_deploy_stack_template_out
 
+- name: Install docker_stack ansible module requirements
+  pip:
+    name:
+      - jsondiff
+      - pyyaml
+  when: docker_deploy_stack_template is defined
+
 - name: Start docker stack
   docker_stack:
     state: "{{ docker_deploy_stack_state | default('present') }}"
@@ -159,3 +166,4 @@
     compose:
       - "{{ docker_deploy_base_folder }}/docker-stack.yml"
   when: docker_deploy_stack_template is defined
+
