@@ -154,9 +154,7 @@
 
 - name: Install docker_stack ansible module requirements
   pip:
-    name:
-      - jsondiff
-      - pyyaml
+    name: "{{ docker_deploy_stack_pip_requirements }}"
   when: docker_deploy_stack_template is defined
 
 - name: Start docker stack
