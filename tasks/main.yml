@@ -185,10 +185,17 @@
       - "{{ docker_deploy_base_folder }}/docker-stack.yml"
   when: docker_deploy_stack_template is defined
 
+- name: Pause for {{ docker_deploy_stack_pause_to_verify | default(15) }} seconds so previous version of the stack could stop
+  pause:
+    seconds: "{{ docker_deploy_stack_pause_to_verify | default(15) }}"
+  when: docker_deploy_stack_template is defined
+
 - name: Verify docker stack
   shell: docker service ls --filter name={{ docker_deploy_stack_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep '[1-9][0-9]*/[0-9]+'
   retries: "{{ docker_deploy_stack_verify_retries | default(50) }}"
   delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
+  register: result
+  until: result.rc == 0
   when: docker_deploy_stack_template is defined and _docker_deploy_stack_state == 'present'
   tags: 
   - docker_deploy_stack_verify
