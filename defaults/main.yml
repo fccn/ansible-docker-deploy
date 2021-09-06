@@ -12,3 +12,12 @@ docker_deploy_git_repositories: []
 docker_deploy_stack_pip_requirements:
   - jsondiff
   - pyyaml
+
+docker_deploy_pip_packages:
+  - docker-py
+  - docker-compose
+  - selectors
+
+docker_deploy_packages: 
+  - "python-pip"
+  - "python-setuptools"

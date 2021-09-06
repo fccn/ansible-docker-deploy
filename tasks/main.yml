@@ -9,6 +9,21 @@
     msg: You need to define the both 'docker_deploy_stack_name' and 'docker_deploy_stack_template'
   when: docker_deploy_stack_name is not defined and docker_deploy_stack_template is defined
 
+- name: Install EPEL release repository
+  package:
+    name: epel-release
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Install package dependencies
+  package:
+    name: "{{ item }}"
+  with_items: "{{ docker_deploy_packages }}"
+
+- name: Install pip dependencies
+  pip:
+    name: "{{ docker_deploy_pip_packages }}"
+
 - name: Create root directory
   file:
     path: "{{ docker_deploy_base_folder }}"
