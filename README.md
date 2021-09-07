@@ -8,6 +8,8 @@ Requirements
 
 Only ansible.
 
+Compatible with ansible 2.7 (only docker-compose) and 2.9.
+
 Role Variables
 --------------
 
@@ -19,6 +21,11 @@ The optional list variables can be used to copy, template or git clone a list of
 
 You can get the git version of the git of each `docker_deploy_git_repositories` by adding an attribute `fact` so the role define a new fact that could be used within the templates or within the compose.
 You can use a specific ssh key to clone the git repository if you define a `ssh_key`
+
+This role can deploy a docker compose to the ansible target server or a docker stack to a docker swarm. 
+For that you need to define one of the following variables:
+* `docker_deploy_compose_template` - deploy a docker compose to the target ansible server
+* `docker_deploy_stack_template` - deploy a docker stack to the docker swarm
 
 Dependencies
 ------------
@@ -130,4 +137,4 @@ Ivo Branco <ivo.branco@fccn.pt>
 * https://www.fccn.pt
 * https://arquivo.pt
 * https://www.nau.edu.pt
-* https://portal.educast.fccn.pt/
+* https://educast.fccn.pt

@@ -1,0 +1,26 @@
+---
+- name: Template docker-compose
+  template:
+    dest: "{{ docker_deploy_base_folder }}/docker-compose.yml"
+    src: "{{ docker_deploy_compose_template }}"
+  register: docker_compose_template_out
+
+- name: Stop docker containers and remove its volumes
+  # Do not change this deprecated name to 'docker_compose' so we can still be compatible with ansible 2.7
+  docker_service:
+    project_src: "{{ docker_deploy_base_folder }}"
+    state: absent
+    remove_volumes: true
+  when: docker_deploy_force_remove_volumes | default(false)
+
+- name: Start docker containers
+  # Do not change this deprecated name to 'docker_compose' so we can still be compatible with ansible 2.7
+  docker_service:
+    project_src: "{{ docker_deploy_base_folder }}"
+    services: "{{ limited_services.split(',') if limited_services is defined else omit }}"
+    # restart all containers if anything has changed
+    restarted: "{{ (docker_deploy_force_restart | default(false)) or docker_compose_template_out.changed or docker_deploy_files_out.changed or docker_deploy_templates_out.changed or docker_deploy_git_repositories_out.changed }}"
+    pull: true # upgrade images prior to starting the application
+    build: true # always build images prior to starting the application
+    #recreate: always
+  register: docker_deploy_output

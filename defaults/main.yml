@@ -1,8 +1,9 @@
 ---
 docker_deploy_base_folder: "/opt/docker-deploy"
 
-# Optional parameter
-#docker_deploy_compose_template: "docker-compose.yml.j2"
+# Optional parameters
+# docker_deploy_compose_template: "docker-compose.yml.j2"
+# docker_deploy_stack_template: docker-stack.yml
 
 docker_deploy_folders: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories }}"
 docker_deploy_files: []

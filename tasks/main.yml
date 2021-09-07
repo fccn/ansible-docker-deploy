@@ -128,91 +128,16 @@
   register: docker_deploy_templates_out
   tags: docker_compose
 
-- name: Template docker-compose
-  template:
-    dest: "{{ docker_deploy_base_folder }}/docker-compose.yml"
-    src: "{{ docker_deploy_compose_template }}"
-  when: docker_deploy_compose_template is defined
-  register: docker_deploy_file
-
 - name: Remove old docker containers
   docker_container: 
     name: "{{ item }}"
     state: absent
   with_items: "{{ docker_containers_to_remove | default([]) }}"
 
-- name: Stop docker containers and remove its volumes
-  docker_compose:
-    project_src: "{{ docker_deploy_base_folder }}"
-    state: absent
-    remove_volumes: true
-  when: docker_deploy_compose_template is defined and ( docker_deploy_force_remove_volumes | default(false) )
-
-- name: Start docker containers
-  docker_compose:
-    project_src: "{{ docker_deploy_base_folder }}"
-    services: "{{ limited_services.split(',') if limited_services is defined else omit }}"
-    # restart all containers if anything has changed
-    restarted: "{{ (docker_deploy_force_restart | default(false)) or docker_deploy_file.changed or docker_deploy_files_out.changed or docker_deploy_templates_out.changed or docker_deploy_git_repositories_out.changed }}"
-    pull: true # upgrade images prior to starting the application
-    build: true # always build images prior to starting the application
-    #recreate: always
+- name: Deploy docker compose
+  include_tasks: docker-deploy-compose.yml
   when: docker_deploy_compose_template is defined
-  register: docker_deploy_output
 
-- name: Template docker stack
-  template:
-    dest: "{{ docker_deploy_base_folder }}/docker-stack.yml"
-    src: "{{ docker_deploy_stack_template }}"
+- name: Deploy docker stack to swarm
+  include_tasks: docker-deploy-stack.yml
   when: docker_deploy_stack_template is defined
-  #register: docker_deploy_stack_template_out
-
-- name: Install docker_stack ansible module requirements
-  pip:
-    name: "{{ docker_deploy_stack_pip_requirements }}"
-  when: docker_deploy_stack_template is defined
-
-- name: Define docker stack state
-  set_fact:
-    _docker_deploy_stack_state: "{{ docker_deploy_stack_state | default('present') }}"
-    docker_deploy_stack_state__message: "??"
-  when: docker_deploy_stack_template is defined
-  tags: always
-
-- name: Define message if starting
-  set_fact:
-    docker_deploy_stack_state__message: "{{ 'Start' }}"
-  when: docker_deploy_stack_template is defined and _docker_deploy_stack_state == 'present'
-  tags: always
-
-- name: Define message if stopping
-  set_fact:
-    docker_deploy_stack_state__message: "{{ 'Stopping' }}"
-  no_log: True
-  when: docker_deploy_stack_template is defined and _docker_deploy_stack_state == 'absent'
-  tags: always
-
-- name: "{{ docker_deploy_stack_state__message }} docker stack"
-  docker_stack:
-    state: "{{ _docker_deploy_stack_state }}"
-    name: "{{ docker_deploy_stack_name }}"
-    compose:
-      - "{{ docker_deploy_base_folder }}/docker-stack.yml"
-  when: docker_deploy_stack_template is defined
-
-- name: Pause for {{ docker_deploy_stack_pause_to_verify | default(15) }} seconds so previous version of the stack could stop
-  pause:
-    seconds: "{{ docker_deploy_stack_pause_to_verify | default(15) }}"
-  when: docker_deploy_stack_template is defined
-
-- name: Verify docker stack
-  shell: docker service ls --filter name={{ docker_deploy_stack_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep '[1-9][0-9]*/[0-9]+'
-  retries: "{{ docker_deploy_stack_verify_retries | default(50) }}"
-  delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
-  register: result
-  until: result.rc == 0
-  when: docker_deploy_stack_template is defined and _docker_deploy_stack_state == 'present'
-  tags: 
-  - docker_deploy_stack_verify
-  - verify
-  - always
