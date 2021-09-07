@@ -1,8 +1,10 @@
 ---
 - name: Verify presence of variables
   fail:
-    msg: You need to define at least one of 'docker_deploy_stack_template' or 'docker_deploy_compose_template' variable.
-  when: docker_deploy_stack_template is not defined and docker_deploy_compose_template is not defined
+    msg: You need to define at least one of 'docker_deploy_stack_template', 'docker_deploy_compose_template' or 'docker_deploy_shell_start' variable.
+  when: docker_deploy_stack_template   is not defined 
+    and docker_deploy_compose_template is not defined 
+    and docker_deploy_shell_start      is not defined
 
 - name: Verify presence of variables
   fail:
@@ -133,6 +135,10 @@
     name: "{{ item }}"
     state: absent
   with_items: "{{ docker_containers_to_remove | default([]) }}"
+
+- name: Deploy docker using shell directly
+  include_tasks: docker-deploy-shell.yml
+  when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined
 
 - name: Deploy docker compose
   include_tasks: docker-deploy-compose.yml

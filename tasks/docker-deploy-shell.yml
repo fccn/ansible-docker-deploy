@@ -1,0 +1,16 @@
+# Use like:
+#   docker_deploy_shell_stop:  stop-services.sh
+#   docker_deploy_shell_start: deploy.sh
+#
+---
+- name: Stop service using shell command
+  shell: "{{ docker_deploy_shell_stop }}"
+  args:
+    chdir: "{{ docker_deploy_base_folder }}"
+  when: docker_deploy_shell_stop is defined
+
+- name: Start service using shell command
+  shell: "{{ docker_deploy_shell_start }}"
+  args:
+    chdir: "{{ docker_deploy_base_folder }}"
+  when: docker_deploy_shell_start is defined
