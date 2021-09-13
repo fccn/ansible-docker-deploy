@@ -10,7 +10,7 @@
   when: docker_deploy_shell_stop is defined
 
 - name: Start service using shell command
-  shell: "{{ docker_deploy_shell_start }}"
+  shell: "{{ docker_deploy_shell_start if docker_deploy_shell_start is defined else docker_deploy_shell_start_default }}"
   args:
     chdir: "{{ docker_deploy_base_folder }}"
-  when: docker_deploy_shell_start is defined
+  when: docker_deploy_shell_start is defined or ( docker_deploy_shell | default (false) | bool )

@@ -27,6 +27,12 @@ For that you need to define one of the following variables:
 * `docker_deploy_compose_template` - deploy a docker compose to the target ansible server
 * `docker_deploy_stack_template` - deploy a docker stack to the docker swarm
 
+If you define `docker_deploy_compose_template` variable, the role by default, would try to use the
+ansible role `docker_service` that only supports the docker-compose '2' specification. If you want
+to use newer docker-compose syntax > 2.0, you need to assign `true` to the variable 
+`docker_deploy_shell`.
+
+
 Dependencies
 ------------
 

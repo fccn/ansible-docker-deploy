@@ -5,6 +5,9 @@ docker_deploy_base_folder: "/opt/docker-deploy"
 # docker_deploy_compose_template: "docker-compose.yml.j2"
 # docker_deploy_stack_template: docker-stack.yml
 
+# To use docker-compose up / down using shell instead of docker-compose ansible role
+# docker_deploy_shell: true
+
 docker_deploy_folders: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories }}"
 docker_deploy_files: []
 docker_deploy_templates: []
@@ -22,3 +25,8 @@ docker_deploy_pip_packages:
 docker_deploy_packages: 
   - "python-pip"
   - "python-setuptools"
+
+# Can be used to forcelly add the '--no-recreate' or '--force-recreate' when starting a docker-compose
+docker_deploy_shell_start_default_additional_parameters: "{{ '--force-recreate' if (docker_deploy_force_restart | default(false)) or docker_compose_template_out.changed or docker_deploy_files_out.changed or docker_deploy_templates_out.changed or docker_deploy_git_repositories_out.changed else '' }}"
+
+docker_deploy_shell_start_default: docker-compose pull && docker-compose up -d {{ docker_deploy_shell_start_default_additional_parameters }}

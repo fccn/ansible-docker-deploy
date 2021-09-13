@@ -138,16 +138,16 @@
 
 - name: Deploy docker using shell directly
   include_tasks: docker-deploy-shell.yml
-  when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined
+  when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined or ( docker_deploy_shell | default (false) | bool )
 
 - name: Deploy docker compose
   include_tasks: docker-deploy-compose.yml
-  when: docker_deploy_compose_template is defined
+  when: docker_deploy_compose_template is defined and not ( docker_deploy_shell | default (false) | bool )
 
 - name: Wait until docker health checks are healthy or ignore it if no docker healthcheck configured
   shell: docker {% raw %} ps --format "{{.Status}}" | awk -F"[()]" '{print $2}' | awk 'NF' | sort | uniq{% endraw %}
   register: docker_healthcheck_out
-  until: docker_healthcheck_out.stdout == 'healthy' or docker_healthcheck_out.stdout == ''
+  until: docker_healthcheck_out.stdout is not defined or docker_healthcheck_out.stdout == 'healthy' or docker_healthcheck_out.stdout == ''
   retries: "{{ docker_deploy_healthcheck_retries | default(20) }}"
   delay: "{{ docker_deploy_healthcheck_delay | default(omit) }}"
   when: ( docker_deploy_shell_start is defined or docker_deploy_compose_template is defined ) and ( docker_deploy_healthcheck | default(true) )
