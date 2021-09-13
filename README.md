@@ -27,11 +27,19 @@ For that you need to define one of the following variables:
 * `docker_deploy_compose_template` - deploy a docker compose to the target ansible server
 * `docker_deploy_stack_template` - deploy a docker stack to the docker swarm
 
-If you define `docker_deploy_compose_template` variable, the role by default, would try to use the
-ansible role `docker_service` that only supports the docker-compose '2' specification. If you want
-to use newer docker-compose syntax > 2.0, you need to assign `true` to the variable 
+If you define `docker_deploy_compose_template` variable, the role by default would use the ansible 
+role `docker_service`. But because ansible only supports the docker-compose '2' specification, this
+role has an additional option that use the `docker-compose up` command directly. 
+So if you need to use the docker-compose syntax > 2.0, you need to assign `true` to the variable 
 `docker_deploy_shell`.
 
+* `docker_deploy_shell_start_default` - by default uses the command 
+`docker-compose pull && docker-compose build && docker-compose up -d` that pull's, build's and 
+startup the compose. By default a `--force-recreate` parameter is added if any file, template or git 
+repository has changed. You can replace that additional parameter if you override the 
+`docker_deploy_shell_start_default_additional_parameters` ansible variable.
+
+* `docker_deploy_force_restart` - to forcelly restart / recreate the containers
 
 Dependencies
 ------------

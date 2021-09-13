@@ -26,7 +26,7 @@ docker_deploy_packages:
   - "python-pip"
   - "python-setuptools"
 
-# Can be used to forcelly add the '--no-recreate' or '--force-recreate' when starting a docker-compose
-docker_deploy_shell_start_default_additional_parameters: "{{ '--force-recreate' if (docker_deploy_force_restart | default(false)) or docker_compose_template_out.changed or docker_deploy_files_out.changed or docker_deploy_templates_out.changed or docker_deploy_git_repositories_out.changed else '' }}"
+# Can be used to forcelly add the '--force-recreate' to the docker-compose up
+#docker_deploy_shell_start_default_additional_parameters: 
 
-docker_deploy_shell_start_default: docker-compose pull && docker-compose up -d {{ docker_deploy_shell_start_default_additional_parameters }}
+#docker_deploy_shell_start_default: docker-compose pull && docker-compose up -d
