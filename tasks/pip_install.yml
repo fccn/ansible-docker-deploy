@@ -1,0 +1,7 @@
+- name: Install pip dependencies with fall back to specific version
+  block:
+    - pip:
+        name: "{{ item.package }}"
+  rescue:
+    - pip:
+        name: "{{ item.package_fallback }}"

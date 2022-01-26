@@ -22,9 +22,12 @@
     name: "{{ item }}"
   with_items: "{{ docker_deploy_packages }}"
 
-- name: Install pip dependencies
-  pip:
-    name: "{{ docker_deploy_pip_packages }}"
+- name: Install pip dependencies with fall back to specific version
+  include: pip_install.yml
+  vars: 
+    package: "{{ item.package }}"
+    package_fallback: "{{ item.package_fallback }}"
+  with_items: "{{ docker_deploy_pip_packages }}"
 
 - name: Create root directory
   file:

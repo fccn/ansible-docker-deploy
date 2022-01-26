@@ -18,9 +18,16 @@ docker_deploy_stack_pip_requirements:
   - pyyaml
 
 docker_deploy_pip_packages:
-  - docker-py
-  - docker-compose
-  - selectors
+  - package: docker-py
+    package_fallback: docker-py==1.10.6
+  - package: docker-compose
+    package_fallback: docker-compose==1.8.0
+  # selectors depends on the user_agent package without a specific release number. 
+  # Newer user_agent version don't support python2.
+  - package: user_agent 
+    package_fallback: user_agent==0.1.9
+  - package: selectors
+    package_fallback: selectors==0.0.14
 
 docker_deploy_packages: 
   - "python-pip"
