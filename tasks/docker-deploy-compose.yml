@@ -4,6 +4,7 @@
     dest: "{{ docker_deploy_base_folder }}/docker-compose.yml"
     src: "{{ docker_deploy_compose_template }}"
   register: docker_compose_template_out
+  tags: docker_deploy
 
 - name: Stop docker containers and remove its volumes
   # Do not change this deprecated name to 'docker_compose' so we can still be compatible with ansible 2.7
@@ -12,6 +13,7 @@
     state: absent
     remove_volumes: true
   when: docker_deploy_force_remove_volumes | default(false)
+  tags: docker_deploy
 
 - name: Start docker containers
   # Do not change this deprecated name to 'docker_compose' so we can still be compatible with ansible 2.7
@@ -24,3 +26,4 @@
     build: true # always build images prior to starting the application
     #recreate: always
   register: docker_deploy_output
+  tags: docker_deploy

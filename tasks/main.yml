@@ -5,22 +5,26 @@
   when: docker_deploy_stack_template   is not defined 
     and docker_deploy_compose_template is not defined 
     and docker_deploy_shell_start      is not defined
+  tags: docker_deploy
 
 - name: Verify presence of variables
   fail:
     msg: You need to define the both 'docker_deploy_stack_name' and 'docker_deploy_stack_template'
   when: docker_deploy_stack_name is not defined and docker_deploy_stack_template is defined
+  tags: docker_deploy
 
 - name: Create root directory
   file:
     path: "{{ docker_deploy_base_folder }}"
     state: directory
+  tags: docker_deploy
 
 - name: Install git
   package: 
     name: git
     state: present
   when: docker_deploy_git_repositories is defined and ( docker_deploy_git_repositories | length ) > 0
+  tags: docker_deploy
 
 - name: Install deployment ssh key
   copy:
@@ -30,6 +34,7 @@
   no_log: True
   with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
   when: docker_deploy_git_repositories is defined
+  tags: docker_deploy
 
 - name: Update git repository source code
   git: 
@@ -44,6 +49,7 @@
   with_items: "{{ ( docker_deploy_git_repositories | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_git_repositories }}"
   when: docker_deploy_git_repositories is defined
   register: docker_deploy_git_repositories_out
+  tags: docker_deploy
 
 - name: Remove deployment ssh key
   file:
@@ -52,6 +58,7 @@
   no_log: True
   with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
   when: docker_deploy_git_repositories is defined
+  tags: docker_deploy
 
 - name: Set permissions to git destination folders
   file:
@@ -65,6 +72,7 @@
     label: "{{ item.dest }}"
   with_items: "{{ docker_deploy_git_repositories | selectattr('owner', 'defined') | list }}"
   when: docker_deploy_git_repositories is defined
+  tags: docker_deploy
 
 - name: Define fact for each git repository update
   set_fact:
@@ -75,6 +83,7 @@
   with_together:
     - "{{ docker_deploy_git_repositories              | default( [] ) }}"
     - "{{ docker_deploy_git_repositories_out.results  | default( [] ) }}"
+  tags: docker_deploy
 
 - name: create context directories
   file:
@@ -85,6 +94,7 @@
     recurse: true
     state: directory
   with_items: "{{ docker_deploy_folders }}"
+  tags: docker_deploy
 
 - name: Copy files
   copy:
@@ -98,7 +108,7 @@
   loop_control:
     label: "{{ item.dest }}"
   register: docker_deploy_files_out
-  tags: docker_compose
+  tags: docker_deploy
 
 - name: Template files
   template:
@@ -113,21 +123,24 @@
   loop_control:
     label: "{{ item.dest }}"
   register: docker_deploy_templates_out
-  tags: docker_compose
+  tags: docker_deploy
 
 - name: Remove old docker containers
   docker_container: 
     name: "{{ item }}"
     state: absent
   with_items: "{{ docker_containers_to_remove | default([]) }}"
+  tags: docker_deploy
 
 - name: Deploy docker using shell directly
   include_tasks: docker-deploy-shell.yml
   when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined or ( docker_deploy_shell | default (false) | bool )
+  tags: docker_deploy
 
 - name: Deploy docker compose
   include_tasks: docker-deploy-compose.yml
   when: docker_deploy_compose_template is defined and not ( docker_deploy_shell | default (false) | bool )
+  tags: docker_deploy
 
 - name: Wait until docker health checks are healthy or ignore it if no docker healthcheck configured
   shell: docker {% raw %} ps --format "{{.Status}}" | awk -F"[()]" '{print $2}' | awk 'NF' | sort | uniq{% endraw %}
@@ -137,7 +150,9 @@
   delay: "{{ docker_deploy_healthcheck_delay | default(omit) }}"
   when: ( docker_deploy_shell_start is defined or docker_deploy_compose_template is defined ) and ( docker_deploy_healthcheck | default(true) )
   changed_when: false # shell command don't change anything on the server
+  tags: docker_deploy
 
 - name: Deploy docker stack to swarm
   include_tasks: docker-deploy-stack.yml
   when: docker_deploy_stack_template is defined
+  tags: docker_deploy
