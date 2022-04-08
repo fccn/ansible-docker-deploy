@@ -8,8 +8,8 @@ docker_deploy_base_folder: "/opt/docker-deploy"
 # To use docker-compose up / down using shell instead of docker-compose ansible role
 # docker_deploy_shell: true
 
-docker_deploy_folders_extend: []
-docker_deploy_folders: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories + docker_deploy_folders_extend }}"
+docker_deploy_folders_additional: []
+docker_deploy_folders: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories + docker_deploy_folders_additional }}"
 docker_deploy_files: []
 docker_deploy_templates: []
 docker_deploy_git_repositories: []
