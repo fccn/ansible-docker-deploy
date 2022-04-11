@@ -85,7 +85,7 @@
     - "{{ docker_deploy_git_repositories_out.results  | default( [] ) }}"
   tags: docker_deploy
 
-- name: create context directories
+- name: Create folders
   file:
     dest: "{{ item.dest | dirname }}"
     owner: "{{ item.dir_owner|default(omit) }}"
