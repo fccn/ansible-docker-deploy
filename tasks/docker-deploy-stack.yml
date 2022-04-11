@@ -49,6 +49,7 @@
   register: result
   until: result.rc == 0
   when: _docker_deploy_stack_state == 'present'
+  changed_when: False
   tags: 
     - docker_deploy
     - docker_deploy_verify
