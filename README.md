@@ -52,7 +52,7 @@ Example Playbook
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
 Example 1:
-```
+```yml
   - hosts: servers
     roles:
         - role: ansible-docker-deploy
@@ -61,7 +61,7 @@ Example 1:
 ```
 
 Example 2:
-```
+```yml
 - hosts: servers
   roles:
       - role: ansible-docker-deploy
@@ -80,7 +80,7 @@ Example 2:
 Example 3:
 
 group vars
-```
+```yml
     docker_deploy_compose_template: "path_to/docker-compose.yml"
     docker_deploy_git_repositories:
     - repo: https://github.com/fccn/wp-nau-theme.git
@@ -95,7 +95,7 @@ group vars
 ```
    
 playbook
-```
+```yml
     hosts: servers
     roles:
         - ansible-docker-deploy
@@ -104,7 +104,7 @@ playbook
 Example 4:
 
 group vars
-```
+```yml
     docker_deploy_stack_template: "path_to/docker-stack.yml"
     docker_deploy_stack_name: wordpress
     docker_deploy_git_repositories:
@@ -120,7 +120,7 @@ group vars
 ```
    
 playbook
-```
+```yml
     hosts: servers
     roles:
         - ansible-docker-deploy
@@ -131,7 +131,7 @@ Test this role
 -------
 
 To test the syntax run:
-```
+```bash
 virtualenv venv
 . venv/bin/activate
 pip install ansible==2.7.12
