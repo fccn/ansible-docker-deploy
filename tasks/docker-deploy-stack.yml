@@ -48,7 +48,7 @@
   delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
   register: result
   until: result.rc == 0
-  when: _docker_deploy_stack_state == 'present'
+  when: not ansible_check_mode and _docker_deploy_stack_state == 'present'
   changed_when: False
   tags: 
     - docker_deploy
