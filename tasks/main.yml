@@ -93,6 +93,8 @@
     mode: "{{ item.dir_mode | default(omit) }}"
     recurse: true
     state: directory
+  loop_control:
+    label: "{{ item.dest }}"
   with_items: "{{ docker_deploy_folders }}"
   tags: docker_deploy
 
@@ -123,6 +125,30 @@
   loop_control:
     label: "{{ item.dest }}"
   register: docker_deploy_templates_out
+  tags: docker_deploy
+
+- name: Deploy docker configs
+  docker_config:
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    state: present
+    force: "{{ item.force | default(omit) }}"
+    labels: "{{ item.labels | default(omit) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ docker_deploy_configs }}"
+  tags: docker_deploy
+
+- name: Deploy docker secrets
+  docker_secret:
+    name: "{{ item.name }}"
+    data: "{{ item.data }}"
+    state: present
+    force: "{{ item.force | default(omit) }}"
+    labels: "{{ item.labels | default(omit) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ docker_deploy_secrets }}"
   tags: docker_deploy
 
 - name: Remove old docker containers
