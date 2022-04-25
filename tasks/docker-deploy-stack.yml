@@ -10,7 +10,7 @@
     name: "{{ docker_deploy_stack_pip_requirements }}"
   tags: docker_deploy
   
-- name: Define docker stack state
+- name: Define docker stack state and name
   set_fact:
     _docker_deploy_stack_state: "{{ docker_deploy_stack_state | default('present') }}"
     docker_deploy_stack_state__message: "??"
@@ -32,7 +32,7 @@
 - name: "{{ docker_deploy_stack_state__message }} docker stack"
   docker_stack:
     state: "{{ _docker_deploy_stack_state }}"
-    name: "{{ docker_deploy_stack_name }}"
+    name: "{{ _docker_deploy_name }}"
     compose:
       - "{{ docker_deploy_base_folder }}/docker-stack.yml"
   tags: docker_deploy
@@ -43,7 +43,7 @@
   tags: docker_deploy
   
 - name: Verify docker stack
-  shell: docker service ls --filter name={{ docker_deploy_stack_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep '[1-9][0-9]*/[0-9]+'
+  shell: docker service ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep '[1-9][0-9]*/[0-9]+'
   retries: "{{ docker_deploy_stack_verify_retries | default(50) }}"
   delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
   register: result

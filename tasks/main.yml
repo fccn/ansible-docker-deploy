@@ -7,11 +7,10 @@
     and docker_deploy_shell_start      is not defined
   tags: docker_deploy
 
-- name: Verify presence of variables
-  fail:
-    msg: You need to define the both 'docker_deploy_stack_name' and 'docker_deploy_stack_template'
-  when: docker_deploy_stack_name is not defined and docker_deploy_stack_template is defined
-  tags: docker_deploy
+- name: Define docker deploy name variable from the docker_deploy_stack_name or from the basename of docker_deploy_base_folder folder
+  set_fact:
+    _docker_deploy_name: "{{ docker_deploy_stack_name | default(docker_deploy_base_folder | basename) }}"
+  tags: always
 
 - name: Create root directory
   file:
@@ -112,6 +111,44 @@
   register: docker_deploy_files_out
   tags: docker_deploy
 
+- name: Get checksum for each copied file with a config_name defined
+  stat:
+    path: "{{ item.dest }}"
+  when: item.config_name is defined or item.secret_name is defined
+  with_items: "{{ ( docker_deploy_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_files_stat_out
+  tags: docker_deploy
+
+- name: Define empty dict for docker configs and secrets checksum
+  set_fact:
+    docker_deploy_configs_checksum: {}
+    docker_deploy_secrets_checksum: {}
+  tags: docker_deploy
+
+- name: Define fact for each copied file with a `config_name` defined with checksum
+  set_fact:
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): item.1.stat.checksum } ) }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.config_name is defined
+  with_together:
+    - "{{ docker_deploy_files                  | default( [] ) }}"
+    - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
+  tags: docker_deploy
+
+- name: Define fact for each copied file with a `secret_name` defined with checksum
+  set_fact:
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): item.1.stat.checksum } ) }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.secret_name is defined
+  with_together:
+    - "{{ docker_deploy_files                  | default( [] ) }}"
+    - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
+  tags: docker_deploy
+
 - name: Template files
   template:
     src: "{{ item.src }}"
@@ -127,9 +164,41 @@
   register: docker_deploy_templates_out
   tags: docker_deploy
 
+- name: Get checksum for each templated file with a config_name or secret_name defined
+  stat:
+    path: "{{ item.dest }}"
+  when: item.config_name is defined or item.secret_name is defined
+  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_templates_stat_out
+  tags: docker_deploy
+
+- name: Define fact for each templated file config name with checksum
+  set_fact:
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): item.1.stat.checksum } ) }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.config_name is defined
+  with_together:
+    - "{{ docker_deploy_templates                  | default( [] ) }}"
+    - "{{ docker_deploy_templates_stat_out.results | default( [] ) }}"
+  tags: docker_deploy
+
+- name: Define fact for each templated file secret name with checksum
+  set_fact:
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): item.1.stat.checksum } ) }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.secret_name is defined
+  with_together:
+    - "{{ docker_deploy_templates                  | default( [] ) }}"
+    - "{{ docker_deploy_templates_stat_out.results | default( [] ) }}"
+  tags: docker_deploy
+
 - name: Deploy docker configs
   docker_config:
-    name: "{{ item.name }}"
+    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum }}"
     data: "{{ item.data }}"
     state: present
     force: "{{ item.force | default(omit) }}"
@@ -139,9 +208,17 @@
   loop: "{{ docker_deploy_configs }}"
   tags: docker_deploy
 
+- name: Define fact for each templated file config name with checksum
+  set_fact:
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum ) } ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ docker_deploy_configs }}"
+  tags: docker_deploy
+
 - name: Deploy docker secrets
   docker_secret:
-    name: "{{ item.name }}"
+    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum }}"
     data: "{{ item.data }}"
     state: present
     force: "{{ item.force | default(omit) }}"
@@ -149,6 +226,14 @@
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ docker_deploy_secrets }}"
+  tags: docker_deploy
+
+- name: Define fact for each secret with checksum
+  set_fact:
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum ) } ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ docker_deploy_configs }}"
   tags: docker_deploy
 
 - name: Remove old docker containers
@@ -182,3 +267,35 @@
   include_tasks: docker-deploy-stack.yml
   when: docker_deploy_stack_template is defined
   tags: docker_deploy
+
+- name: Print docker configs checksum
+  debug:
+    var: docker_deploy_configs_checksum
+  when: ansible_verbosity > 0
+  tags: docker_deploy
+
+- name: Print docker secrets checksum
+  debug:
+    var: docker_deploy_secrets_checksum
+  when: ansible_verbosity > 0
+  tags: docker_deploy
+
+# - shell: docker config ls | tail -n +2 | awk '{print $2}'
+#   register: docker_configs_current_output
+#   tags: docker_deploy
+
+# - name: 
+#   docker_config:
+#     name: "{{ item }}"
+#     state: absent
+#   with_items: docker_configs_current_output.stdout_lines | docker_deploy_configs_checksum.keys()
+
+# - name: Remove old not in use docker secrets of {{ _docker_deploy_name}}
+#   command: docker config rm $(docker config ls --filter name={{ _docker_deploy_name + '_' }} -q)
+#   ignore_errors: True # to skip if
+#   tags: docker_deploy
+
+# - name: Remove old not in use docker configs of {{ _docker_deploy_name}}
+#   command: docker secret rm $(docker secret ls --filter name={{ _docker_deploy_name + '_' }} -q)
+#   ignore_errors: True
+#   tags: docker_deploy
