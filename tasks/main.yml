@@ -129,7 +129,7 @@
 
 - name: Define fact for each copied file with a `config_name` defined with checksum
   set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): item.1.stat.checksum } ) }}"
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.config_name is defined
@@ -140,7 +140,7 @@
 
 - name: Define fact for each copied file with a `secret_name` defined with checksum
   set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): item.1.stat.checksum } ) }}"
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.secret_name is defined
@@ -176,7 +176,7 @@
 
 - name: Define fact for each templated file config name with checksum
   set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): item.1.stat.checksum } ) }}"
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.config_name is defined
@@ -187,7 +187,7 @@
 
 - name: Define fact for each templated file secret name with checksum
   set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): item.1.stat.checksum } ) }}"
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.secret_name is defined
