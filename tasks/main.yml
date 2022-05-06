@@ -243,6 +243,18 @@
   with_items: "{{ docker_containers_to_remove | default([]) }}"
   tags: docker_deploy
 
+- name: Print docker configs checksum if in verbosity mode
+  debug:
+    var: docker_deploy_configs_checksum
+  when: ansible_verbosity > 0
+  tags: docker_deploy
+
+- name: Print docker secrets checksum if in verbosity mode
+  debug:
+    var: docker_deploy_secrets_checksum
+  when: ansible_verbosity > 0
+  tags: docker_deploy
+
 - name: Deploy docker using shell directly
   include_tasks: docker-deploy-shell.yml
   when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined or ( docker_deploy_shell | default (false) | bool )
@@ -266,18 +278,6 @@
 - name: Deploy docker stack to swarm
   include_tasks: docker-deploy-stack.yml
   when: docker_deploy_stack_template is defined
-  tags: docker_deploy
-
-- name: Print docker configs checksum
-  debug:
-    var: docker_deploy_configs_checksum
-  when: ansible_verbosity > 0
-  tags: docker_deploy
-
-- name: Print docker secrets checksum
-  debug:
-    var: docker_deploy_secrets_checksum
-  when: ansible_verbosity > 0
   tags: docker_deploy
 
 # - shell: docker config ls | tail -n +2 | awk '{print $2}'
