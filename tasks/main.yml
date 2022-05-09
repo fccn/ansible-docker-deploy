@@ -111,7 +111,7 @@
   register: docker_deploy_files_out
   tags: docker_deploy
 
-- name: Get checksum for each copied file with a config_name defined
+- name: Get checksum for each copied file with a config_name or secret_name defined
   stat:
     path: "{{ item.dest }}"
   when: item.config_name is defined or item.secret_name is defined
@@ -129,7 +129,7 @@
 
 - name: Define fact for each copied file with a `config_name` defined with checksum
   set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.config_name is defined
@@ -140,7 +140,7 @@
 
 - name: Define fact for each copied file with a `secret_name` defined with checksum
   set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.secret_name is defined
@@ -149,7 +149,7 @@
     - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
   tags: docker_deploy
 
-- name: Template files
+- name: Template files with src
   template:
     src: "{{ item.src }}"
     dest: "{{ item.dest }}"
@@ -157,11 +157,24 @@
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
     backup: "{{ item.backup | default(omit) }}"
-  when: item.when | default(true) | bool
+  when: item.src is defined and ( item.when | default(true) | bool )
   with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
   loop_control:
     label: "{{ item.dest }}"
-  register: docker_deploy_templates_out
+  tags: docker_deploy
+
+- name: Template files with src_data
+  template:
+    src: src_data_file.j2
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+    backup: "{{ item.backup | default(omit) }}"
+  when: item.src_data is defined and ( item.when | default(true) | bool )
+  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
+  loop_control:
+    label: "{{ item.dest }}"
   tags: docker_deploy
 
 - name: Get checksum for each templated file with a config_name or secret_name defined
@@ -176,7 +189,7 @@
 
 - name: Define fact for each templated file config name with checksum
   set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.config_name is defined
@@ -187,7 +200,7 @@
 
 - name: Define fact for each templated file secret name with checksum
   set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) ) } ) }}"
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
   when: item.0.secret_name is defined
@@ -198,8 +211,9 @@
 
 - name: Deploy docker configs
   docker_config:
-    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum }}"
-    data: "{{ item.data }}"
+    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum | truncate(10, True, '') }}"
+    data: "{{ item.data | b64encode }}"
+    data_is_b64: true
     state: present
     force: "{{ item.force | default(omit) }}"
     labels: "{{ item.labels | default(omit) }}"
@@ -210,7 +224,7 @@
 
 - name: Define fact for each templated file config name with checksum
   set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum ) } ) }}"
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ docker_deploy_configs }}"
@@ -218,8 +232,9 @@
 
 - name: Deploy docker secrets
   docker_secret:
-    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum }}"
-    data: "{{ item.data }}"
+    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum | truncate(10, True, '') }}"
+    data: "{{ item.data | b64encode }}"
+    data_is_b64: true
     state: present
     force: "{{ item.force | default(omit) }}"
     labels: "{{ item.labels | default(omit) }}"
@@ -230,7 +245,7 @@
 
 - name: Define fact for each secret with checksum
   set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum ) } ) }}"
+    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ docker_deploy_configs }}"
@@ -280,22 +295,12 @@
   when: docker_deploy_stack_template is defined
   tags: docker_deploy
 
-# - shell: docker config ls | tail -n +2 | awk '{print $2}'
-#   register: docker_configs_current_output
-#   tags: docker_deploy
+- name: Delete old configs for this stack
+  command: "{% raw %}docker config ls --filter name=openedx --format '{{.ID}}' | xargs docker config rm{% endraw %}"
+  ignore_errors: True # to skip if
+  tags: docker_deploy
 
-# - name: 
-#   docker_config:
-#     name: "{{ item }}"
-#     state: absent
-#   with_items: docker_configs_current_output.stdout_lines | docker_deploy_configs_checksum.keys()
-
-# - name: Remove old not in use docker secrets of {{ _docker_deploy_name}}
-#   command: docker config rm $(docker config ls --filter name={{ _docker_deploy_name + '_' }} -q)
-#   ignore_errors: True # to skip if
-#   tags: docker_deploy
-
-# - name: Remove old not in use docker configs of {{ _docker_deploy_name}}
-#   command: docker secret rm $(docker secret ls --filter name={{ _docker_deploy_name + '_' }} -q)
-#   ignore_errors: True
-#   tags: docker_deploy
+- name: Delete old secrets for this stack
+  command: "{% raw %}docker secret ls --filter name=openedx --format '{{.ID}}' | xargs docker secret rm{% endraw %}"
+  ignore_errors: True # to skip if
+  tags: docker_deploy
