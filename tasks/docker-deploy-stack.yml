@@ -43,7 +43,7 @@
   tags: docker_deploy
   
 - name: Verify docker stack
-  shell: docker service ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep '[1-9][0-9]*/[0-9]+'
+  shell: docker service ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep -o '[0-9]+/[0-9]+' | awk -F/ '{ if ($1 != $2 && $2 != 0) exit -1}'
   retries: "{{ docker_deploy_stack_verify_retries | default(50) }}"
   delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
   register: result
