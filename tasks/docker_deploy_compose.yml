@@ -27,3 +27,7 @@
     #recreate: always
   register: docker_deploy_output
   tags: docker_deploy
+
+- name: HealthCheck
+  include_tasks: docker_healthcheck.yml
+  tags: docker_deploy

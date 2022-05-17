@@ -38,3 +38,7 @@
     chdir: "{{ docker_deploy_base_folder }}"
   when: docker_deploy_shell_start is defined or ( docker_deploy_shell | default (false) | bool )
   tags: docker_deploy
+
+- name: HealthCheck
+  include_tasks: docker_healthcheck.yml
+  tags: docker_deploy

@@ -1,0 +1,74 @@
+---
+- name: Get checksum for each copied file with a config_name defined
+  stat:
+    path: "{{ item.dest }}"
+  when: item.config_name is defined
+  with_items: "{{ ( docker_deploy_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_files_stat_out
+  tags: docker_deploy
+
+- name: Define empty dict for docker configs checksum
+  set_fact:
+    docker_deploy_configs_checksum: {}
+  tags: docker_deploy
+
+- name: Define fact for each copied file with a `config_name` defined with checksum
+  set_fact:
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.config_name is defined
+  with_together:
+    - "{{ docker_deploy_files                  | default( [] ) }}"
+    - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
+  tags: docker_deploy
+
+- name: Get checksum for each templated file with a config_name defined
+  stat:
+    path: "{{ item.dest }}"
+  when: item.config_name is defined
+  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_templates_stat_out
+  tags: docker_deploy
+
+- name: Define fact for each templated file config name with checksum
+  set_fact:
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.config_name is defined
+  with_together:
+    - "{{ docker_deploy_templates                  | default( [] ) }}"
+    - "{{ docker_deploy_templates_stat_out.results | default( [] ) }}"
+  tags: docker_deploy
+
+- name: Deploy docker configs
+  docker_config:
+    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum | truncate(10, True, '') }}"
+    data: "{{ item.data | b64encode }}"
+    data_is_b64: true
+    state: present
+    force: "{{ item.force | default(omit) }}"
+    labels: "{{ item.labels | default(omit) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ docker_deploy_configs }}"
+  tags: docker_deploy
+
+- name: Define fact for each config with a checksum
+  set_fact:
+    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum | truncate(10, True, '') ) } ) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  loop: "{{ docker_deploy_configs }}"
+  tags: docker_deploy
+
+- name: Print docker configs checksum if in verbosity mode
+  debug:
+    var: docker_deploy_configs_checksum
+  when: ansible_verbosity > 0
+  tags: docker_deploy

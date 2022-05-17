@@ -18,70 +18,8 @@
     state: directory
   tags: docker_deploy
 
-- name: Install git
-  package: 
-    name: git
-    state: present
-  when: docker_deploy_git_repositories is defined and ( docker_deploy_git_repositories | length ) > 0
-  tags: docker_deploy
-
-- name: Install deployment ssh key
-  copy:
-    dest: "{{ item.dest + 'ssh_key' }}"
-    content: "{{ item.ssh_key }}"
-    mode: "0600"
-  no_log: True
-  with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
-  when: docker_deploy_git_repositories is defined
-  tags: docker_deploy
-
-- name: Update git repository source code
-  git: 
-    repo: "{{ item.repo }}"
-    dest: "{{ item.dest }}"
-    force: "{{ item.force | default(omit) }}"
-    version: "{{ item.version | default(omit) }}"
-    accept_hostkey: yes
-    key_file: "{{ ( item.dest + 'ssh_key' ) if item.ssh_key is defined else omit }}"
-  loop_control:
-    label: "{{ item.repo }}"
-  with_items: "{{ ( docker_deploy_git_repositories | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_git_repositories }}"
-  when: docker_deploy_git_repositories is defined
-  register: docker_deploy_git_repositories_out
-  tags: docker_deploy
-
-- name: Remove deployment ssh key
-  file:
-    dest: "{{ item.dest + 'ssh_key' }}"
-    state: absent
-  no_log: True
-  with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
-  when: docker_deploy_git_repositories is defined
-  tags: docker_deploy
-
-- name: Set permissions to git destination folders
-  file:
-    path: "{{ item.dest }}"
-    state: directory
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}" 
-    mode: "{{ item.mode }}"
-    recurse: yes
-  loop_control:
-    label: "{{ item.dest }}"
-  with_items: "{{ docker_deploy_git_repositories | selectattr('owner', 'defined') | list }}"
-  when: docker_deploy_git_repositories is defined
-  tags: docker_deploy
-
-- name: Define fact for each git repository update
-  set_fact:
-    "{{ item.0.fact }}": "{{ item.1.after }}"
-  loop_control:
-    label: "{{ item.0.dest }}"
-  when: item.0.fact is defined
-  with_together:
-    - "{{ docker_deploy_git_repositories              | default( [] ) }}"
-    - "{{ docker_deploy_git_repositories_out.results  | default( [] ) }}"
+- name: Git
+  include_tasks: git.yml
   tags: docker_deploy
 
 - name: Create folders
@@ -109,44 +47,6 @@
   loop_control:
     label: "{{ item.dest }}"
   register: docker_deploy_files_out
-  tags: docker_deploy
-
-- name: Get checksum for each copied file with a config_name or secret_name defined
-  stat:
-    path: "{{ item.dest }}"
-  when: item.config_name is defined or item.secret_name is defined
-  with_items: "{{ ( docker_deploy_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_files }}"
-  loop_control:
-    label: "{{ item.dest }}"
-  register: docker_deploy_files_stat_out
-  tags: docker_deploy
-
-- name: Define empty dict for docker configs and secrets checksum
-  set_fact:
-    docker_deploy_configs_checksum: {}
-    docker_deploy_secrets_checksum: {}
-  tags: docker_deploy
-
-- name: Define fact for each copied file with a `config_name` defined with checksum
-  set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
-  loop_control:
-    label: "{{ item.0.dest }}"
-  when: item.0.config_name is defined
-  with_together:
-    - "{{ docker_deploy_files                  | default( [] ) }}"
-    - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
-  tags: docker_deploy
-
-- name: Define fact for each copied file with a `secret_name` defined with checksum
-  set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
-  loop_control:
-    label: "{{ item.0.dest }}"
-  when: item.0.secret_name is defined
-  with_together:
-    - "{{ docker_deploy_files                  | default( [] ) }}"
-    - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
   tags: docker_deploy
 
 - name: Template files with src
@@ -177,130 +77,29 @@
     label: "{{ item.dest }}"
   tags: docker_deploy
 
-- name: Get checksum for each templated file with a config_name or secret_name defined
-  stat:
-    path: "{{ item.dest }}"
-  when: item.config_name is defined or item.secret_name is defined
-  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
-  loop_control:
-    label: "{{ item.dest }}"
-  register: docker_deploy_templates_stat_out
+- include_tasks: docker_configs.yml
   tags: docker_deploy
 
-- name: Define fact for each templated file config name with checksum
-  set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
-  loop_control:
-    label: "{{ item.0.dest }}"
-  when: item.0.config_name is defined
-  with_together:
-    - "{{ docker_deploy_templates                  | default( [] ) }}"
-    - "{{ docker_deploy_templates_stat_out.results | default( [] ) }}"
+- include_tasks: docker_secrets.yml
   tags: docker_deploy
 
-- name: Define fact for each templated file secret name with checksum
-  set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.secret_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
-  loop_control:
-    label: "{{ item.0.dest }}"
-  when: item.0.secret_name is defined
-  with_together:
-    - "{{ docker_deploy_templates                  | default( [] ) }}"
-    - "{{ docker_deploy_templates_stat_out.results | default( [] ) }}"
-  tags: docker_deploy
-
-- name: Deploy docker configs
-  docker_config:
-    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum | truncate(10, True, '') }}"
-    data: "{{ item.data | b64encode }}"
-    data_is_b64: true
-    state: present
-    force: "{{ item.force | default(omit) }}"
-    labels: "{{ item.labels | default(omit) }}"
-  loop_control:
-    label: "{{ item.name }}"
-  loop: "{{ docker_deploy_configs }}"
-  tags: docker_deploy
-
-- name: Define fact for each templated file config name with checksum
-  set_fact:
-    docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum | truncate(10, True, '') ) } ) }}"
-  loop_control:
-    label: "{{ item.name }}"
-  loop: "{{ docker_deploy_configs }}"
-  tags: docker_deploy
-
-- name: Deploy docker secrets
-  docker_secret:
-    name: "{{ _docker_deploy_name }}_{{ item.name }}_{{ item.data | checksum | truncate(10, True, '') }}"
-    data: "{{ item.data | b64encode }}"
-    data_is_b64: true
-    state: present
-    force: "{{ item.force | default(omit) }}"
-    labels: "{{ item.labels | default(omit) }}"
-  loop_control:
-    label: "{{ item.name }}"
-  loop: "{{ docker_deploy_secrets }}"
-  tags: docker_deploy
-
-- name: Define fact for each secret with checksum
-  set_fact:
-    docker_deploy_secrets_checksum: "{{ docker_deploy_secrets_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum | truncate(10, True, '') ) } ) }}"
-  loop_control:
-    label: "{{ item.name }}"
-  loop: "{{ docker_deploy_configs }}"
-  tags: docker_deploy
-
-- name: Remove old docker containers
-  docker_container: 
-    name: "{{ item }}"
-    state: absent
-  with_items: "{{ docker_containers_to_remove | default([]) }}"
-  tags: docker_deploy
-
-- name: Print docker configs checksum if in verbosity mode
-  debug:
-    var: docker_deploy_configs_checksum
-  when: ansible_verbosity > 0
-  tags: docker_deploy
-
-- name: Print docker secrets checksum if in verbosity mode
-  debug:
-    var: docker_deploy_secrets_checksum
-  when: ansible_verbosity > 0
+- include_tasks: stop_old.yml
   tags: docker_deploy
 
 - name: Deploy docker using shell directly
-  include_tasks: docker-deploy-shell.yml
+  include_tasks: docker_deploy_shell.yml
   when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined or ( docker_deploy_shell | default (false) | bool )
   tags: docker_deploy
 
 - name: Deploy docker compose
-  include_tasks: docker-deploy-compose.yml
+  include_tasks: docker_deploy_compose.yml
   when: docker_deploy_compose_template is defined and not ( docker_deploy_shell | default (false) | bool )
   tags: docker_deploy
 
-- name: Wait until docker health checks are healthy or ignore it if no docker healthcheck configured
-  shell: docker {% raw %} ps --format "{{.Status}}" | awk -F"[()]" '{print $2}' | awk 'NF' | sort | uniq{% endraw %}
-  register: docker_healthcheck_out
-  until: docker_healthcheck_out.stdout is not defined or docker_healthcheck_out.stdout == 'healthy' or docker_healthcheck_out.stdout == ''
-  retries: "{{ docker_deploy_healthcheck_retries | default(20) }}"
-  delay: "{{ docker_deploy_healthcheck_delay | default(omit) }}"
-  when: ( docker_deploy_shell_start is defined or docker_deploy_compose_template is defined ) and ( docker_deploy_healthcheck | default(true) )
-  changed_when: false # shell command don't change anything on the server
-  tags: docker_deploy
-
 - name: Deploy docker stack to swarm
-  include_tasks: docker-deploy-stack.yml
+  include_tasks: docker_deploy_stack.yml
   when: docker_deploy_stack_template is defined
   tags: docker_deploy
 
-- name: Delete old configs for this stack
-  command: "{% raw %}docker config ls --filter name=openedx --format '{{.ID}}' | xargs docker config rm{% endraw %}"
-  ignore_errors: True # to skip if
-  tags: docker_deploy
-
-- name: Delete old secrets for this stack
-  command: "{% raw %}docker secret ls --filter name=openedx --format '{{.ID}}' | xargs docker secret rm{% endraw %}"
-  ignore_errors: True # to skip if
+- include_tasks: docker_clean.yml
   tags: docker_deploy

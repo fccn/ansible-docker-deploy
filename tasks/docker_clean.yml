@@ -1,0 +1,10 @@
+---
+- name: Delete old configs for this stack
+  command: "{% raw %}docker config ls --filter name=openedx --format '{{.ID}}' | xargs docker config rm{% endraw %}"
+  ignore_errors: True # to skip if
+  tags: docker_deploy
+
+- name: Delete old secrets for this stack
+  command: "{% raw %}docker secret ls --filter name=openedx --format '{{.ID}}' | xargs docker secret rm{% endraw %}"
+  ignore_errors: True # to skip if
+  tags: docker_deploy

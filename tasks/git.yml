@@ -1,0 +1,66 @@
+---
+- name: Install git
+  package: 
+    name: git
+    state: present
+  when: docker_deploy_git_repositories is defined and ( docker_deploy_git_repositories | length ) > 0
+  tags: docker_deploy
+
+- name: Install deployment ssh key
+  copy:
+    dest: "{{ item.dest + 'ssh_key' }}"
+    content: "{{ item.ssh_key }}"
+    mode: "0600"
+  no_log: True
+  with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
+  when: docker_deploy_git_repositories is defined
+  tags: docker_deploy
+
+- name: Update git repository source code
+  git: 
+    repo: "{{ item.repo }}"
+    dest: "{{ item.dest }}"
+    force: "{{ item.force | default(omit) }}"
+    version: "{{ item.version | default(omit) }}"
+    accept_hostkey: yes
+    key_file: "{{ ( item.dest + 'ssh_key' ) if item.ssh_key is defined else omit }}"
+  loop_control:
+    label: "{{ item.repo }}"
+  with_items: "{{ ( docker_deploy_git_repositories | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_git_repositories }}"
+  when: docker_deploy_git_repositories is defined
+  register: docker_deploy_git_repositories_out
+  tags: docker_deploy
+
+- name: Remove deployment ssh key
+  file:
+    dest: "{{ item.dest + 'ssh_key' }}"
+    state: absent
+  no_log: True
+  with_items: "{{ docker_deploy_git_repositories | selectattr('ssh_key', 'defined') | list }}"
+  when: docker_deploy_git_repositories is defined
+  tags: docker_deploy
+
+- name: Set permissions to git destination folders
+  file:
+    path: "{{ item.dest }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}" 
+    mode: "{{ item.mode }}"
+    recurse: yes
+  loop_control:
+    label: "{{ item.dest }}"
+  with_items: "{{ docker_deploy_git_repositories | selectattr('owner', 'defined') | list }}"
+  when: docker_deploy_git_repositories is defined
+  tags: docker_deploy
+
+- name: Define fact for each git repository update
+  set_fact:
+    "{{ item.0.fact }}": "{{ item.1.after }}"
+  loop_control:
+    label: "{{ item.0.dest }}"
+  when: item.0.fact is defined
+  with_together:
+    - "{{ docker_deploy_git_repositories              | default( [] ) }}"
+    - "{{ docker_deploy_git_repositories_out.results  | default( [] ) }}"
+  tags: docker_deploy

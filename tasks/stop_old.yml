@@ -1,0 +1,10 @@
+---
+- name: Stop and remove old docker containers
+  docker_container: 
+    name: "{{ item }}"
+    state: absent
+  with_items: "{{ docker_containers_to_remove | default([]) }}"
+  tags: docker_deploy
+
+# TODO stop docker service
+# run docker service rm <service>
