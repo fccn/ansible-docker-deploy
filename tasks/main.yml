@@ -77,13 +77,16 @@
     label: "{{ item.dest }}"
   tags: docker_deploy
 
-- include_tasks: docker_configs.yml
+- name: Docker configs
+  include_tasks: docker_configs.yml
   tags: docker_deploy
 
-- include_tasks: docker_secrets.yml
+- name: Docker secrets
+  include_tasks: docker_secrets.yml
   tags: docker_deploy
 
-- include_tasks: stop_old.yml
+- name: Stop and remove old containers
+  include_tasks: stop_old.yml
   tags: docker_deploy
 
 - name: Deploy docker using shell directly
