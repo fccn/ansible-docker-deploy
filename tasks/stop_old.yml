@@ -6,5 +6,7 @@
   with_items: "{{ docker_containers_to_remove | default([]) }}"
   tags: docker_deploy
 
-# TODO stop docker service
-# run docker service rm <service>
+- name: Stop and remove old docker services
+  shell: docker service rm {{ item }}
+  with_items: "{{ docker_services_to_remove | default([]) }}"
+  tags: docker_deploy
