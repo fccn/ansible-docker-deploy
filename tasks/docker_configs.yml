@@ -70,5 +70,5 @@
 - name: Print docker configs checksum if in verbosity mode
   debug:
     var: docker_deploy_configs_checksum
-  when: ansible_verbosity > 0
+  # when: ansible_verbosity > 0
   tags: docker_deploy
