@@ -5,11 +5,16 @@
   when: docker_deploy_stack_template   is not defined 
     and docker_deploy_compose_template is not defined 
     and docker_deploy_shell_start      is not defined
-  tags: docker_deploy
+  tags: always
 
 - name: Define docker deploy name variable from the docker_deploy_stack_name or from the basename of docker_deploy_base_folder folder
   set_fact:
     _docker_deploy_name: "{{ docker_deploy_stack_name | default(docker_deploy_base_folder | basename) }}"
+  tags: always
+
+- name: Print the docker deploy name
+  debug:
+    msg: "Deploying: {{ _docker_deploy_name }}"
   tags: always
 
 - name: Create root directory
