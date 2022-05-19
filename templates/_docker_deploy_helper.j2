@@ -1,0 +1,122 @@
+##
+## Helper file with a couple of Jinja2 macros.
+## This file contain a couple of macros that helps to generate the configs and secrets.
+##
+
+
+## Prints the configs of a `service`. 
+## The `service` is an optional parameter, if not defined it will render all templates and
+## files with the attribute `config_name` defined. Example:
+##
+## Configuration:
+##   docker_deploy_templates:
+##     - src: files/nginx.conf.j2
+##       dest: /opt/nginx.conf
+##       docker_target: /etc/nginx/nginx.conf
+##       config_name: nginx_conf
+##
+## Output of the macro:
+##     configs:
+##       - source: nginx_conf_ab8c30826d
+##         target: /etc/nginx/nginx.conf
+##
+{% macro service_configs(header=true, service=None) %}
+{% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
+{% if service %}
+{% set templates_and_files_filted = (templates_and_files | selectattr('config_name', 'defined') | selectattr('service','defined') | selectattr('service', 'equalto', service) | list) %}
+{% else %}
+{% set templates_and_files_filted = (templates_and_files | selectattr('config_name', 'defined') | list) %}
+{% endif %}
+{% if ( (templates_and_files_filted | length > 0) and header ) %}
+    configs:
+{% endif %}
+{% for f in ( templates_and_files_filted | list ) %}
+      - source: {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ docker_deploy_stack_name + '_' + f.config_name ] }}
+        target: {{ f.docker_target }}
+{% endfor %}
+{% endmacro %}
+
+
+## Prints the secrets of a `service`. 
+## The `service` is an optional parameter, if not defined it will render all templates and
+## files with the attribute `secret_name` defined. Example:
+##
+## Configuration:
+##   docker_deploy_files:
+##     - src: files/my-certificate.key.pem
+##       dest: /opt/certificate.key.pem
+##       docker_target: /etc/ssl/certs/certificate.key.pem
+##       secret_name: certificate_key
+##
+## Output of the macro:
+##       secrets:
+##         - source: certificate_key_7c3ff94989
+##           target: /etc/ssl/certs/certificate.key.pem
+##
+{% macro service_secrets(header=true, service=None) %}
+{% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
+{% if service %}
+{% set templates_and_files_filted = (templates_and_files | selectattr('secret_name', 'defined') | selectattr('service','defined') | selectattr('service', 'equalto', service) | list) %}
+{% else %}
+{% set templates_and_files_filted = (templates_and_files | selectattr('secret_name', 'defined') | list) %}
+{% endif %}
+{% if ( (templates_and_files_filted | length > 0) and header ) %}
+    secrets:
+{% endif %}
+{% for f in templates_and_files_filted %}
+      - source: {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ docker_deploy_stack_name + '_' + f.secret_name ] }}
+        target: {{ f.docker_target }}
+{% endfor %}
+{% endmacro %}
+
+
+## Prints the configs of a docker stack.
+##
+## Configuration:
+##   docker_deploy_templates:
+##     - src: files/nginx.conf.j2
+##       dest: /opt/nginx.conf
+##       config_name: nginx_conf
+##
+## Output of the macro:
+##   configs:
+##     nginx_conf_7c3ff94989:
+##       file: /opt/nginx.conf
+##
+{% macro configs(header=true) %}
+{% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
+{% set templates_and_files_filted = (templates_and_files | selectattr('config_name', 'defined') | list) %}
+{% if ( (templates_and_files_filted | length > 0) and header ) %}
+configs:
+{% endif %}
+{% for f in templates_and_files_filted %}
+  {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ docker_deploy_stack_name + '_' + f.config_name ] }}:
+    file: {{ f.dest }}
+{% endfor %}
+{% endmacro %}
+
+
+## Prints the secrets of a docker stack.
+##
+## Configuration:
+##   docker_deploy_files:
+##     - src: files/my-certificate.key.pem
+##       dest: /opt/certificate.key.pem
+##       secret_name: certificate_key
+##
+## Output of the macro:
+##   secrets:
+##     certificate_key_7c3ff94989:
+##       file: /opt/certificate.key.pem
+##
+{% macro secrets(header=true) %}
+{% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
+{% set templates_and_files_filted = (templates_and_files | selectattr('secret_name', 'defined') | list) %}
+{% if ( (templates_and_files_filted | length > 0) and header ) %}
+secrets:
+{% endif %}
+{% for f in templates_and_files_filted %}
+  {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ docker_deploy_stack_name + '_' + f.secret_name ] }}:
+    file: {{ f.dest }}
+{% endfor %}
+{% endmacro %}
