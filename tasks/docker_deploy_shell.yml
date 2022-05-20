@@ -41,4 +41,6 @@
 
 - name: HealthCheck
   include_tasks: docker_healthcheck.yml
-  tags: docker_deploy
+  tags: 
+    - docker_deploy
+    - healthcheck

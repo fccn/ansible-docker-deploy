@@ -97,7 +97,9 @@
 - name: Deploy docker using shell directly
   include_tasks: docker_deploy_shell.yml
   when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined or ( docker_deploy_shell | default (false) | bool )
-  tags: docker_deploy
+  tags: 
+    - docker_deploy
+    - healthcheck
 
 - name: Deploy docker compose
   include_tasks: docker_deploy_compose.yml

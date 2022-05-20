@@ -52,4 +52,4 @@
   changed_when: False
   tags: 
     - docker_deploy
-    - docker_deploy_verify
+    - healthcheck

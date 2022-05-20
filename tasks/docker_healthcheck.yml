@@ -7,4 +7,6 @@
   delay: "{{ docker_deploy_healthcheck_delay | default(omit) }}"
   when: ( docker_deploy_shell_start is defined or docker_deploy_compose_template is defined ) and ( docker_deploy_healthcheck | default(true) )
   changed_when: false # shell command don't change anything on the server
-  tags: docker_deploy
+  tags: 
+    - docker_deploy
+    - healthcheck
