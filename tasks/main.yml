@@ -47,7 +47,7 @@
     mode: "{{ item.mode | default('0644') }}"
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
-  when: item.when | default(true) | bool
+  when: item.src is defined and ( item.when | default(true) | bool )
   with_items: "{{ ( docker_deploy_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_files }}"
   loop_control:
     label: "{{ item.dest }}"
