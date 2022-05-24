@@ -1,8 +1,12 @@
 ---
 - name: Delete old configs for this stack
   shell: docker config ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.ID}}'{% endraw %} | xargs docker config rm || true
+  when: not ansible_check_mode
+  changed_when: False
   tags: docker_deploy
 
 - name: Delete old secrets for this stack
   shell: docker secret ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.ID}}'{% endraw %} | xargs docker secret rm || true
+  when: not ansible_check_mode
+  changed_when: False
   tags: docker_deploy
