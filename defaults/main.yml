@@ -24,3 +24,7 @@ docker_deploy_stack_pip_requirements:
 #docker_deploy_shell_start_default_additional_parameters: 
 
 #docker_deploy_shell_start_default: docker-compose pull && docker-compose up -d
+
+# Declare helper docker services that can be used to generate helper files, like an helper Makefile
+docker_deploy_services: "{{ ( (docker_deploy_templates + docker_deploy_files) | selectattr('service', 'defined') | map(attribute='service') | unique | list) + docker_deploy_services_additional }}"
+docker_deploy_services_additional: []
