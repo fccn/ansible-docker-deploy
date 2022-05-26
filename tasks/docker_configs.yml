@@ -19,7 +19,7 @@
     docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
-  when: item.0.config_name is defined
+  when: item.0.config_name is defined and ( item.0.when | default(true) | bool )
   with_together:
     - "{{ docker_deploy_files                  | default( [] ) }}"
     - "{{ docker_deploy_files_stat_out.results | default( [] ) }}"
@@ -28,7 +28,7 @@
 - name: Get checksum for each templated file with a config_name defined
   stat:
     path: "{{ item.dest }}"
-  when: item.config_name is defined
+  when: item.config_name is defined and ( item.when | default(true) | bool )
   with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
   loop_control:
     label: "{{ item.dest }}"
@@ -40,7 +40,7 @@
     docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.config_name ): ( item.1.stat.checksum | default ( 99999999 | random | to_uuid ) | truncate(10, True, '') ) } ) }}"
   loop_control:
     label: "{{ item.0.dest }}"
-  when: item.0.config_name is defined
+  when: item.0.config_name is defined and ( item.0.when | default(true) | bool )
   with_together:
     - "{{ docker_deploy_templates                  | default( [] ) }}"
     - "{{ docker_deploy_templates_stat_out.results | default( [] ) }}"
@@ -54,6 +54,7 @@
     state: present
     force: "{{ item.force | default(omit) }}"
     labels: "{{ item.labels | default(omit) }}"
+  when: item.when | default(true) | bool
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ docker_deploy_configs }}"
@@ -62,6 +63,7 @@
 - name: Define fact for each config with a checksum
   set_fact:
     docker_deploy_configs_checksum: "{{ docker_deploy_configs_checksum | combine( { ( _docker_deploy_name + '_' + item.0.name ): ( item.data | checksum | truncate(10, True, '') ) } ) }}"
+  when: item.when | default(true) | bool
   loop_control:
     label: "{{ item.name }}"
   loop: "{{ docker_deploy_configs }}"

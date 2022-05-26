@@ -37,6 +37,7 @@
     state: directory
   loop_control:
     label: "{{ item.dest }}"
+  when: item.when | default(true) | bool
   with_items: "{{ docker_deploy_folders }}"
   tags: docker_deploy
 
