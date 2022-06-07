@@ -33,6 +33,7 @@
   docker_stack:
     state: "{{ _docker_deploy_stack_state }}"
     name: "{{ _docker_deploy_name }}"
+    prune: "{{ docker_deploy_stack_prune | default(omit) }}"
     compose:
       - "{{ docker_deploy_base_folder }}/docker-stack.yml"
   tags: docker_deploy
