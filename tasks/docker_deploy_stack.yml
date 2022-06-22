@@ -44,7 +44,7 @@
   tags: docker_deploy
   
 - name: HealthCheck
-  shell: docker service ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.Replicas}}'{% endraw %} | egrep -o '[0-9]+/[0-9]+' | awk -F/ '{ if ($1 != $2 && $2 != 0) exit -1}'
+  shell: docker service ls --filter name={{ _docker_deploy_name }} --format {% raw %}'{{.Name}}|{{.Mode}}|{{.Replicas}}'{% endraw %} | egrep -v '[_-]job\|' | egrep -o '[0-9]+/[0-9]+' | awk -F/ '{ if ($1 != $2 && $2 != 0) exit -1}'
   retries: "{{ docker_deploy_stack_verify_retries | default(50) }}"
   delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
   register: result
