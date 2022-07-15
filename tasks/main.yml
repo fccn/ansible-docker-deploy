@@ -67,6 +67,7 @@
   with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
   loop_control:
     label: "{{ item.dest }}"
+  register: docker_deploy_templates_out
   tags: docker_deploy
 
 - name: Template files with src_data
