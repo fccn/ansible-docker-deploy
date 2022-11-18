@@ -36,6 +36,9 @@
     prune: "{{ docker_deploy_stack_prune | default(omit) }}"
     compose:
       - "{{ docker_deploy_base_folder }}/docker-stack.yml"
+  # retry deploy the stack, because sometimes it raises some strange errors that a new deploy fixes.
+  retries: 5
+  delay: 10
   tags: docker_deploy
   
 - name: Pause for {{ docker_deploy_stack_pause_to_verify | default(15) }} seconds so previous version of the stack could stop
