@@ -3,6 +3,7 @@
   template:
     dest: "{{ docker_deploy_base_folder }}/docker-compose.yml"
     src: "{{ docker_deploy_compose_template }}"
+    backup: "{{ docker_deploy_compose_template_backup }}"
   register: docker_compose_template_out
   tags: docker_deploy
 

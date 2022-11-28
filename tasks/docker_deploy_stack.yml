@@ -3,6 +3,7 @@
   template:
     dest: "{{ docker_deploy_base_folder }}/docker-stack.yml"
     src: "{{ docker_deploy_stack_template }}"
+    backup: "{{ docker_deploy_stack_template_backup }}"
   tags: docker_deploy
 
 - name: Install docker_stack ansible module requirements
