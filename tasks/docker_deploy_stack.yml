@@ -30,18 +30,25 @@
   when: _docker_deploy_stack_state == 'absent'
   tags: always
 
-- name: "{{ docker_deploy_stack_state__message }} docker stack"
-  docker_stack:
-    state: "{{ _docker_deploy_stack_state }}"
-    name: "{{ _docker_deploy_name }}"
-    prune: "{{ docker_deploy_stack_prune | default(omit) }}"
-    compose:
-      - "{{ docker_deploy_base_folder }}/docker-stack.yml"
-  # retry deploy the stack, because sometimes it raises some strange errors that a new deploy fixes.
+- name: "Start docker stack"
+  shell: docker stack deploy {{ _docker_deploy_name }}{{ ' --prune' if docker_deploy_stack_prune is defined and docker_deploy_stack_prune else '' }} --compose-file "{{ docker_deploy_base_folder }}/docker-stack.yml"
+  when: _docker_deploy_stack_state == 'present'
+  # retry the deploy of the stack, because sometimes it raises some strange errors that a new deploy fixes.
+  register: result
+  until: result.rc == 0
   retries: 5
   delay: 10
   tags: docker_deploy
   
+- name: "Stop docker stack"
+  shell: docker stack rm {{ _docker_deploy_name }}
+  when: _docker_deploy_stack_state == 'absent'
+  register: result
+  until: result.rc == 0
+  retries: 5
+  delay: 10
+  tags: docker_deploy
+
 - name: Pause for {{ docker_deploy_stack_pause_to_verify | default(15) }} seconds so previous version of the stack could stop
   pause:
     seconds: "{{ docker_deploy_stack_pause_to_verify | default(15) }}"
