@@ -34,19 +34,21 @@
   shell: docker stack deploy {{ _docker_deploy_name }}{{ ' --prune' if docker_deploy_stack_prune is defined and docker_deploy_stack_prune else '' }} --compose-file "{{ docker_deploy_base_folder }}/docker-stack.yml"
   when: _docker_deploy_stack_state == 'present'
   # retry the deploy of the stack, because sometimes it raises some strange errors that a new deploy fixes.
-  register: result
-  until: result.rc == 0
+  register: result_start
+  until: result_start.rc == 0
   retries: 5
   delay: 10
+  ignore_errors: "{{ ansible_check_mode }}"
   tags: docker_deploy
   
 - name: "Stop docker stack"
   shell: docker stack rm {{ _docker_deploy_name }}
   when: _docker_deploy_stack_state == 'absent'
-  register: result
-  until: result.rc == 0
+  register: result_stop
+  until: result_stop.rc == 0
   retries: 5
   delay: 10
+  ignore_errors: "{{ ansible_check_mode }}"
   tags: docker_deploy
 
 - name: Pause for {{ docker_deploy_stack_pause_to_verify | default(15) }} seconds so previous version of the stack could stop
@@ -58,10 +60,11 @@
   shell: docker stack ps {{ _docker_deploy_name }} | tail -n +2 | grep -v " \\\\_ " | egrep -v "[_-]job" | awk '{ if ( $5 != $6 ) {exit -1} }'
   retries: "{{ docker_deploy_stack_verify_retries | default(50) }}"
   delay: "{{ docker_deploy_stack_verify_delay | default(15) }}"
-  register: result
-  until: result.rc == 0
+  register: result_healthcheck
+  until: result_healthcheck.rc == 0
   when: not ansible_check_mode and _docker_deploy_stack_state == 'present'
   changed_when: False
+  ignore_errors: "{{ ansible_check_mode }}"
   tags: 
     - docker_deploy
     - healthcheck
