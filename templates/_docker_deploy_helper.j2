@@ -33,7 +33,7 @@
     configs:
 {% endif %}
 {% for f in ( templates_and_files | list ) %}
-      - source: {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ docker_deploy_stack_name + '_' + f.config_name ] }}
+      - source: {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ _docker_deploy_name + '_' + f.config_name ] }}
         target: {{ f.docker_target }}
 {% endfor %}
 {% endmacro %}
@@ -68,7 +68,7 @@
 {% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% for f in templates_and_files %}
-      - source: {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ docker_deploy_stack_name + '_' + f.secret_name ] }}
+      - source: {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ _docker_deploy_name + f.secret_name ] }}
         target: {{ f.docker_target }}
 {% endfor %}
 {% endmacro %}
@@ -96,7 +96,7 @@ configs:
 {% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% for f in templates_and_files %}
-  {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ docker_deploy_stack_name + '_' + f.config_name ] }}:
+  {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ _docker_deploy_name + '_' + f.config_name ] }}:
     file: {{ f.dest }}
 {% endfor %}
 {% endmacro %}
@@ -124,7 +124,7 @@ secrets:
 {% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% for f in templates_and_files %}
-  {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ docker_deploy_stack_name + '_' + f.secret_name ] }}:
+  {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ _docker_deploy_name + f.secret_name ] }}:
     file: {{ f.dest }}
 {% endfor %}
 {% endmacro %}
