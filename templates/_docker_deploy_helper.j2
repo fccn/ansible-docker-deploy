@@ -62,11 +62,11 @@
 {% else %}
 {% set templates_and_files = (templates_and_files | selectattr('secret_name', 'defined') | list) %}
 {% endif %}
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+                             (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
     secrets:
 {% endif %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
-                             (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% for f in templates_and_files %}
       - source: {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ _docker_deploy_name + '_' + f.secret_name ] }}
         target: {{ f.docker_target }}
@@ -90,11 +90,11 @@
 {% macro configs(header=true) %}
 {% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
 {% set templates_and_files = (templates_and_files | selectattr('config_name', 'defined') | list) %}
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+                             (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
 configs:
 {% endif %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
-                             (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% for f in templates_and_files %}
   {{ f.config_name }}_{{ hostvars[inventory_hostname]['docker_deploy_configs_checksum'][ _docker_deploy_name + '_' + f.config_name ] }}:
     file: {{ f.dest }}
@@ -118,11 +118,11 @@ configs:
 {% macro secrets(header=true) %}
 {% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
 {% set templates_and_files = (templates_and_files | selectattr('secret_name', 'defined') | list) %}
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+                             (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
 secrets:
 {% endif %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
-                             (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% for f in templates_and_files %}
   {{ f.secret_name }}_{{ hostvars[inventory_hostname]['docker_deploy_secrets_checksum'][ _docker_deploy_name + '_' + f.secret_name ] }}:
     file: {{ f.dest }}
