@@ -42,8 +42,11 @@ So if you need to use the docker-compose syntax > 2.0, you need to assign `true`
 
 * `docker_deploy_shell_start_default` - by default uses the command 
 `docker-compose pull && docker-compose build && docker-compose up -d` that pull's, build's and 
-startup the compose. By default a `--force-recreate` parameter is added if any file, template or git 
-repository has changed. You can replace that additional parameter if you override the 
+startup the compose.
+If you want to `--force-recreate` if any file, template or git 
+repository has changed. You can should add `--force-recreate` to the
+`docker_deploy_shell_start_default_additional_parameters_if_changed` ansible variable.
+If you want to always add parameters to the docker-compose command you should use the
 `docker_deploy_shell_start_default_additional_parameters` ansible variable.
 
 * `docker_deploy_force_restart` - to forcefully restart / recreate the containers
