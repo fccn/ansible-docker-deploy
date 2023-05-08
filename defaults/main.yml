@@ -14,6 +14,7 @@ docker_deploy_stack_template_backup: true
 docker_deploy_folders_additional: []
 docker_deploy_folders: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories + docker_deploy_folders_additional }}"
 docker_deploy_files: []
+docker_deploy_s3: []
 docker_deploy_templates: []
 docker_deploy_git_repositories: []
 docker_deploy_configs: []

@@ -1,0 +1,33 @@
+---
+- name: Install s3cmd
+  package:
+    name: s3cmd
+    state: present
+  tags: docker_deploy
+
+- name: Download file from S3
+  shell: "{{ s3cmd_prefix }} {{ item.src if item.src.startswith('s3://') else 's3://' + docker_deploy_s3_bucket + ( '' if item.src.startswith('/') else '/' ) + item.src }} {{ item.dest }}"
+  vars:
+    s3cmd_prefix: s3cmd get --force {{ '--host ' + docker_deploy_s3_host + ' --host-bucket ' + docker_deploy_s3_bucket }}
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ docker_deploy_s3_access_key_id }}"
+    AWS_SECRET_ACCESS_KEY: "{{ docker_deploy_s3_secret_access_key }}"
+  when: item.src is defined and ( item.when | default(true) | bool )
+  with_items: "{{ ( docker_deploy_s3_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_s3_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_s3_out
+  tags: docker_deploy
+
+- name: Change permissions of s3 copied files
+  file:
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode | default('0644') }}"
+    owner: "{{ item.owner | default('root') }}"
+    group: "{{ item.group | default('root') }}"
+  when: item.src is defined and ( item.when | default(true) | bool )
+  with_items: "{{ ( docker_deploy_s3_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_s3_files }}"
+  loop_control:
+    label: "{{ item.dest }}"
+  register: docker_deploy_s3_permissions_out
+  tags: docker_deploy
