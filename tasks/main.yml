@@ -57,7 +57,7 @@
 
 - name: Copy files from S3
   include_tasks: s3.yml
-  when: "{{ docker_deploy_s3_files | length > 0 }}"
+  when: docker_deploy_s3_files | length > 0
   tags: docker_deploy
 
 - name: Template files with src
