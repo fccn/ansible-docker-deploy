@@ -9,5 +9,4 @@ galaxy_info:
     - deploy
     - docker
     - docker-compose
-    - docker-stack
 dependencies: []
