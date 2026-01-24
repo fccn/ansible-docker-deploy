@@ -3,13 +3,11 @@ docker_deploy_base_folder: "/opt/docker-deploy"
 
 # Optional parameters
 # docker_deploy_compose_template: "docker-compose.yml.j2"
-# docker_deploy_stack_template: docker-stack.yml
 
 # To use docker-compose up / down using shell instead of docker-compose ansible role
 # docker_deploy_shell: true
 
 docker_deploy_compose_template_backup: false
-docker_deploy_stack_template_backup: false
 
 docker_deploy_folders_additional: []
 docker_deploy_folders: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories + docker_deploy_folders_additional }}"
@@ -19,10 +17,6 @@ docker_deploy_templates: []
 docker_deploy_git_repositories: []
 docker_deploy_configs: []
 docker_deploy_secrets: []
-
-docker_deploy_stack_pip_requirements:
-  - jsondiff
-  - pyyaml
 
 # Can be used to forcefully add the '--force-recreate' to the docker-compose up
 #docker_deploy_shell_start_default_additional_parameters: 
