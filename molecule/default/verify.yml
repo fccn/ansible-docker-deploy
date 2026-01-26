@@ -1,0 +1,27 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Check if docker-compose.yml was deployed
+      stat:
+        path: /opt/test-app/docker-compose.yml
+      register: compose_file
+
+    - name: Verify compose file exists
+      assert:
+        that:
+          - compose_file.stat.exists
+        fail_msg: "docker-compose.yml was not deployed"
+
+    - name: Check if container is running
+      docker_container_info:
+        name: molecule_test_nginx
+      register: container_info
+
+    - name: Verify container is running
+      assert:
+        that:
+          - container_info.exists
+          - container_info.container.State.Running
+        fail_msg: "Container is not running"

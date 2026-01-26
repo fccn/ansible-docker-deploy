@@ -1,0 +1,46 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: yes
+  become: yes
+
+  vars:
+    test_deploy_folder: "/opt/test-app"
+
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Docker
+      package:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create test docker-compose template
+      copy:
+        dest: /tmp/docker-compose.yml.j2
+        content: |
+          version: '3.8'
+          services:
+            nginx:
+              image: nginx:alpine
+              container_name: molecule_test_nginx
+              ports:
+                - "8080:80"
+
+  roles:
+    - role: ansible-docker-deploy
+      docker_deploy_base_folder: "{{ test_deploy_folder }}"
+      docker_deploy_compose_template: /tmp/docker-compose.yml.j2
+      docker_deploy_shell: true

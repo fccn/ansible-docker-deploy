@@ -1,0 +1,8 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Wait for system to be ready
+      wait_for_connection:
+        timeout: 300

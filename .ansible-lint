@@ -1,0 +1,22 @@
+---
+profile: moderate
+
+exclude_paths:
+  - .git/
+  - .github/
+  - tests/
+
+skip_list:
+  - yaml[line-length]
+  - name[casing]
+  - var-naming[no-role-prefix]
+  - schema[meta]
+
+warn_list:
+  - experimental
+  - role-name
+
+enable_list:
+  - yaml
+
+use_default_rules: true

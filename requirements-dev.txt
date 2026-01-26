@@ -1,0 +1,8 @@
+# Development requirements (includes test requirements)
+-r requirements.txt
+
+# Additional development tools
+pytest>=7.0.0
+pytest-ansible>=3.0.0
+black>=22.0.0
+flake8>=5.0.0
