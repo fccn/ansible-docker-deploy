@@ -58,9 +58,6 @@ jobs:
         include:
           - ansible-version: '2.9'
             python-version: '3.8'  # Ansible 2.9 requires Python <= 3.8
-        exclude:
-          - ansible-version: '2.9'
-            python-version: '3.11'
     steps:
       - name: Check out code
         uses: actions/checkout@v4
