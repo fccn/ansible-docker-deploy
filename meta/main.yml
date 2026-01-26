@@ -5,7 +5,7 @@ galaxy_info:
   issue_tracker_url: https://github.com/fccn/ansible-docker-deploy/issues
   license: GPL-3.0-only
   min_ansible_version: 2.7.12
-  galaxy_tags: 
+  galaxy_tags:
     - deploy
     - docker
     - docker-compose

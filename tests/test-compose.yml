@@ -1,0 +1,89 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars:
+    test_base_folder: "/tmp/ansible-docker-deploy-test"
+    test_deploy_folder: "{{ test_base_folder }}/test-app"
+
+  tasks:
+    - name: Clean up test directory
+      file:
+        path: "{{ test_base_folder }}"
+        state: absent
+      tags: cleanup
+
+    - name: Create test directory
+      file:
+        path: "{{ test_base_folder }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create index.html template for testing
+      copy:
+        dest: "{{ test_base_folder }}/index.html.j2"
+        content: |
+          <html>
+          <body>
+            <h1>Ansible Docker Deploy Test - Success!</h1>
+          </body>
+          </html>
+
+    - name: Create test docker-compose template
+      copy:
+        dest: "{{ test_base_folder }}/docker-compose.yml.j2"
+        content: |
+          version: '3.8'
+          services:
+            nginx:
+              image: nginx:alpine
+              container_name: test_nginx
+              ports:
+                - "8080:80"
+              volumes:
+                - {{ test_deploy_folder }}/index.html:/usr/share/nginx/html/index.html:ro
+
+    - name: Test basic deployment with compose
+      include_role:
+        name: ansible-docker-deploy
+      vars:
+        docker_deploy_base_folder: "{{ test_deploy_folder }}"
+        docker_deploy_compose_template: "{{ test_base_folder }}/docker-compose.yml.j2"
+        docker_deploy_shell: true
+        docker_deploy_templates:
+          - src: "{{ test_base_folder }}/index.html.j2"
+            dest: "{{ test_deploy_folder }}/index.html"
+            owner: "{{ ansible_user_id }}"
+            group: "{{ ansible_user_id }}"
+
+    - name: Wait for container to be healthy
+      wait_for:
+        port: 8080
+        delay: 5
+        timeout: 30
+
+    - name: Test HTTP response
+      uri:
+        url: http://localhost:8080
+        return_content: yes
+      register: response
+      failed_when: "'Success!' not in response.content"
+
+    - name: Stop test container
+      docker_container:
+        name: test_nginx
+        state: stopped
+      ignore_errors: yes
+
+    - name: Remove test container
+      docker_container:
+        name: test_nginx
+        state: absent
+      ignore_errors: yes
+
+    - name: Clean up test directory
+      file:
+        path: "{{ test_base_folder }}"
+        state: absent
+      tags: cleanup

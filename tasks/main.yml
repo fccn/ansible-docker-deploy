@@ -2,7 +2,7 @@
 - name: Verify presence of variables
   fail:
     msg: You need to define at least one of 'docker_deploy_compose_template' or 'docker_deploy_shell_start' variable.
-  when: docker_deploy_compose_template is not defined 
+  when: docker_deploy_compose_template is not defined
     and docker_deploy_shell_start      is not defined
   tags: always
 
@@ -29,8 +29,8 @@
 - name: Create folders
   file:
     dest: "{{ item.dest | dirname }}"
-    owner: "{{ item.dir_owner|default(omit) }}"
-    group: "{{ item.dir_group|default(omit) }}"
+    owner: "{{ item.dir_owner | default(omit) }}"
+    group: "{{ item.dir_group | default(omit) }}"
     mode: "{{ item.dir_mode | default(omit) }}"
     recurse: true
     state: directory
@@ -48,7 +48,7 @@
     owner: "{{ item.owner | default('root') }}"
     group: "{{ item.group | default('root') }}"
   when: item.src is defined and ( item.when | default(true) | bool )
-  with_items: "{{ ( docker_deploy_files | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_files }}"
+  with_items: "{{ (docker_deploy_files | selectattr('service', 'in', limited_services.split(','))) if limited_services is defined else docker_deploy_files }}"
   loop_control:
     label: "{{ item.dest }}"
   register: docker_deploy_files_out
@@ -68,7 +68,7 @@
     group: "{{ item.group | default('root') }}"
     backup: "{{ item.backup | default(omit) }}"
   when: item.src is defined and ( item.when | default(true) | bool )
-  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
+  with_items: "{{ (docker_deploy_templates | selectattr('service', 'in', limited_services.split(','))) if limited_services is defined else docker_deploy_templates }}"
   loop_control:
     label: "{{ item.dest }}"
   register: docker_deploy_templates_out
@@ -83,7 +83,7 @@
     group: "{{ item.group | default('root') }}"
     backup: "{{ item.backup | default(omit) }}"
   when: item.src_data is defined and ( item.when | default(true) | bool )
-  with_items: "{{ ( docker_deploy_templates | selectattr('service', 'in', limited_services.split(',') ) ) if limited_services is defined else docker_deploy_templates }}"
+  with_items: "{{ (docker_deploy_templates | selectattr('service', 'in', limited_services.split(','))) if limited_services is defined else docker_deploy_templates }}"
   loop_control:
     label: "{{ item.dest }}"
   tags: docker_deploy
@@ -100,10 +100,38 @@
   include_tasks: stop_old.yml
   tags: docker_deploy
 
+- name: Check if community.docker.docker_compose_v2 module is available
+  block:
+    - name: Try to load docker_compose_v2 module info
+      ansible.builtin.command: ansible-doc -t module community.docker.docker_compose_v2
+      register: docker_compose_v2_check
+      changed_when: false
+      failed_when: false
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+    - name: Auto-enable shell mode if docker_compose_v2 not available and user hasn't explicitly set docker_deploy_shell
+      set_fact:
+        docker_deploy_shell: true
+      when:
+        - docker_deploy_shell is not defined or not docker_deploy_shell
+        - docker_compose_v2_check.rc != 0
+        - docker_deploy_compose_template is defined
+
+    - name: Warn about falling back to shell mode
+      debug:
+        msg: "Warning: community.docker.docker_compose_v2 module not available. Automatically using shell mode for deployment."
+      when:
+        - docker_compose_v2_check.rc != 0
+        - docker_deploy_compose_template is defined
+  when: docker_deploy_compose_template is defined and ( docker_deploy_shell is not defined or not docker_deploy_shell )
+  tags: docker_deploy
+
 - name: Deploy docker using shell directly
   include_tasks: docker_deploy_shell.yml
   when: docker_deploy_shell_start is defined or docker_deploy_shell_stop is defined or ( docker_deploy_shell | default (false) | bool )
-  tags: 
+  tags:
     - docker_deploy
     - healthcheck
 

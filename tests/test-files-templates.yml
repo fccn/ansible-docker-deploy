@@ -1,0 +1,89 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: yes
+
+  vars:
+    test_base_folder: "/tmp/ansible-docker-deploy-test-files"
+    test_deploy_folder: "{{ test_base_folder }}/test-app"
+
+  tasks:
+    - name: Clean up test directory
+      file:
+        path: "{{ test_base_folder }}"
+        state: absent
+
+    - name: Create test directory
+      file:
+        path: "{{ test_base_folder }}"
+        state: directory
+        mode: '0755'
+
+    - name: Create test source file
+      copy:
+        dest: "{{ test_base_folder }}/test-config.txt"
+        content: "Test configuration file"
+
+    - name: Create test template
+      copy:
+        dest: "{{ test_base_folder }}/test-template.j2"
+        content: |
+          # Generated configuration
+          hostname: {{ ansible_hostname }}
+          date: {{ ansible_date_time.iso8601 }}
+
+    - name: Create minimal docker-compose template
+      copy:
+        dest: "{{ test_base_folder }}/docker-compose.yml.j2"
+        content: |
+          version: '3.8'
+          services:
+            busybox:
+              image: busybox:latest
+              container_name: test_busybox
+              command: sleep 30
+
+    - name: Test deployment with files and templates
+      include_role:
+        name: ansible-docker-deploy
+      vars:
+        docker_deploy_base_folder: "{{ test_deploy_folder }}"
+        docker_deploy_compose_template: "{{ test_base_folder }}/docker-compose.yml.j2"
+        docker_deploy_shell: true
+        docker_deploy_files:
+          - src: "{{ test_base_folder }}/test-config.txt"
+            dest: "{{ test_deploy_folder }}/config.txt"
+            owner: "{{ ansible_user_id }}"
+            group: "{{ ansible_user_id }}"
+        docker_deploy_templates:
+          - src: "{{ test_base_folder }}/test-template.j2"
+            dest: "{{ test_deploy_folder }}/rendered-config.txt"
+            owner: "{{ ansible_user_id }}"
+            group: "{{ ansible_user_id }}"
+
+    - name: Verify copied file exists
+      stat:
+        path: "{{ test_deploy_folder }}/config.txt"
+      register: copied_file
+      failed_when: not copied_file.stat.exists
+
+    - name: Verify templated file exists
+      stat:
+        path: "{{ test_deploy_folder }}/rendered-config.txt"
+      register: templated_file
+      failed_when: not templated_file.stat.exists
+
+    - name: Verify templated file content
+      shell: grep -q "hostname:" "{{ test_deploy_folder }}/rendered-config.txt"
+      changed_when: false
+
+    - name: Stop and remove test container
+      docker_container:
+        name: test_busybox
+        state: absent
+      ignore_errors: yes
+
+    - name: Clean up test directory
+      file:
+        path: "{{ test_base_folder }}"
+        state: absent

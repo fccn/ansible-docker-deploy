@@ -4,7 +4,7 @@
 ##
 
 
-## Prints the configs of a `service`. 
+## Prints the configs of a `service`.
 ## The `service` is an optional parameter, if not defined it will render all templates and
 ## files with the attribute `config_name` defined. Example:
 ##
@@ -27,7 +27,7 @@
 {% else %}
 {% set templates_and_files = (templates_and_files | selectattr('config_name', 'defined') | list) %}
 {% endif %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) +
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
     configs:
@@ -39,7 +39,7 @@
 {% endmacro %}
 
 
-## Prints the secrets of a `service`. 
+## Prints the secrets of a `service`.
 ## The `service` is an optional parameter, if not defined it will render all templates and
 ## files with the attribute `secret_name` defined. Example:
 ##
@@ -62,7 +62,7 @@
 {% else %}
 {% set templates_and_files = (templates_and_files | selectattr('secret_name', 'defined') | list) %}
 {% endif %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) +
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
     secrets:
@@ -90,7 +90,7 @@
 {% macro configs(header=true) %}
 {% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
 {% set templates_and_files = (templates_and_files | selectattr('config_name', 'defined') | list) %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) +
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
 configs:
@@ -118,7 +118,7 @@ configs:
 {% macro secrets(header=true) %}
 {% set templates_and_files = (docker_deploy_templates + docker_deploy_files) %}
 {% set templates_and_files = (templates_and_files | selectattr('secret_name', 'defined') | list) %}
-{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) + 
+{% set templates_and_files = (templates_and_files | rejectattr('when', 'defined') | list) +
                              (templates_and_files | selectattr('when', 'defined') | selectattr('when', 'equalto', true) | list) %}
 {% if ( (templates_and_files | length > 0) and header ) %}
 secrets:
