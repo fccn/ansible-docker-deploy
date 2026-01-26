@@ -1,4 +1,6 @@
 galaxy_info:
+  role_name: ansible_docker_deploy
+  namespace: fccn
   author: Ivo Branco
   description: Deploy docker compose
   company: FCT|FCCN

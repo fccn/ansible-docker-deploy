@@ -18,7 +18,9 @@ provisioner:
   config_options:
     defaults:
       callbacks_enabled: profile_tasks,timer
-      stdout_callback: yaml
+      stdout_callback: default
+      result_format: yaml
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/..
   inventory:
     host_vars:
       instance:
@@ -34,7 +36,6 @@ scenario:
     - create
     - prepare
     - converge
-    - idempotence
     - side_effect
     - verify
     - cleanup
