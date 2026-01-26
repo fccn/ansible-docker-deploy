@@ -1,0 +1,76 @@
+# Multi-stage Dockerfile for testing different Ansible versions
+ARG ANSIBLE_VERSION=latest
+ARG PYTHON_VERSION=3.11
+
+FROM python:${PYTHON_VERSION}-slim as base
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git \
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /roles/ansible-docker-deploy
+
+FROM base as ansible-2.9
+RUN pip install --no-cache-dir "ansible~=2.9.0"
+# Copy role files after installation for better caching
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-4
+# Copy only requirements.yml first for better layer caching
+COPY requirements.yml ./
+RUN pip install --no-cache-dir "ansible~=4.0" && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+# Copy role files after installation
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-5
+COPY requirements.yml ./
+RUN pip install --no-cache-dir "ansible~=5.0" && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-6
+COPY requirements.yml ./
+RUN pip install --no-cache-dir "ansible~=6.0" && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-7
+COPY requirements.yml ./
+RUN pip install --no-cache-dir "ansible~=7.0" && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-8
+COPY requirements.yml ./
+RUN pip install --no-cache-dir "ansible~=8.0" && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-9
+COPY requirements.yml ./
+RUN pip install --no-cache-dir "ansible~=9.0" && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+FROM base as ansible-latest
+COPY requirements.yml ./
+RUN pip install --no-cache-dir ansible && \
+    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
+COPY . .
+RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
+
+# Default stage
+FROM ansible-${ANSIBLE_VERSION}
+
+CMD ["ansible-playbook", "tests/test.yml", "-i", "tests/inventory", "--syntax-check"]

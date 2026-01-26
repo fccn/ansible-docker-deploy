@@ -81,6 +81,12 @@ make syntax-check
 # Run all tests
 make test
 
+# Test with different Ansible versions using Docker
+make docker-test-all
+
+# Test in parallel (faster!)
+make -j4 docker-test-all-parallel
+
 # Run specific test
 make test-compose
 ```

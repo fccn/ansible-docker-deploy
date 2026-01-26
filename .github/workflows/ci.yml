@@ -48,13 +48,19 @@ jobs:
       matrix:
         ansible-version:
           - '2.9'
-          - '2.10'
-          - '2.11'
-          - '2.12'
-          - '2.13'
-          - '2.14'
-          - '2.15'
-          - 'stable-2.16'
+          - '4'   # ansible 4.x (includes ansible-core 2.11)
+          - '5'   # ansible 5.x (includes ansible-core 2.12)
+          - '6'   # ansible 6.x (includes ansible-core 2.13)
+          - '7'   # ansible 7.x (includes ansible-core 2.14)
+          - '8'   # ansible 8.x (includes ansible-core 2.15)
+          - '9'   # ansible 9.x (includes ansible-core 2.16)
+          - 'latest'
+        include:
+          - ansible-version: '2.9'
+            python-version: '3.8'  # Ansible 2.9 requires Python <= 3.8
+        exclude:
+          - ansible-version: '2.9'
+            python-version: '3.11'
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -62,15 +68,15 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version || '3.11' }}
 
       - name: Install Ansible ${{ matrix.ansible-version }}
         run: |
           python -m pip install --upgrade pip
-          if [ "${{ matrix.ansible-version }}" = "stable-2.16" ]; then
+          if [ "${{ matrix.ansible-version }}" = "latest" ]; then
             pip install ansible
           else
-            pip install ansible==${{ matrix.ansible-version }}.*
+            pip install "ansible~=${{ matrix.ansible-version }}.0"
           fi
 
       - name: Display Ansible version

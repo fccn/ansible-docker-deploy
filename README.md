@@ -361,6 +361,70 @@ The role includes a comprehensive test suite with multiple test scenarios:
 2. **test-files-templates.yml** - Tests file copying and template rendering
 3. **test-secrets-configs.yml** - Tests Docker secrets and configs functionality
 
+#### Quick Start - Using Makefile
+
+```bash
+# Run all tests
+make test
+
+# Run specific test types
+make syntax-check
+make lint
+make test-compose
+make test-files
+make test-secrets
+```
+
+#### Testing with Multiple Ansible Versions
+
+**Option 1: Docker-based testing (Recommended)**
+
+No need to install different Ansible versions - everything runs in Docker:
+
+```bash
+# Test all Ansible versions (4, 5, 6, 7, 8, 9, latest)
+make docker-test-all
+
+# Test all versions in parallel (faster!)
+make -j4 docker-test-all-parallel
+
+# Test specific version
+make docker-test VERSION=9
+make docker-test VERSION=6
+
+# Clean up Docker images
+make docker-clean
+```
+
+**Option 2: Virtual environment testing**
+
+Tests only versions compatible with your current Python:
+- **Python 3.12**: Ansible 7, 8, 9
+- **Python 3.11**: Ansible 7, 8, 9
+- **Python 3.10 or older**: Ansible 4, 5, 6, 7, 8, 9
+
+```bash
+# Test all compatible versions sequentially
+make test-all-versions
+
+# Test compatible versions in parallel
+make -j3 test-all-versions-parallel
+
+# Test specific version (if compatible)
+make test-ansible-version VERSION=9
+
+# Clean up virtual environments
+make clean-venvs
+```
+
+**Python/Ansible Compatibility:**
+- Ansible 2.9: Python ≤ 3.8
+- Ansible 4-6: Python 3.8 - 3.10
+- Ansible 7-8: Python 3.9 - 3.11
+- Ansible 9+: Python 3.10 - 3.12
+
+**Note:** Virtual env tests automatically skip incompatible versions. For full version coverage, use Docker-based testing.
+
 #### Running All Tests
 
 ```bash

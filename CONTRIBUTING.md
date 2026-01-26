@@ -48,6 +48,67 @@ ansible-galaxy collection install -r requirements.yml
 
 ## Testing
 
+### Quick Testing with Make
+
+```bash
+# Run all tests (syntax check + linting + integration tests)
+make test
+
+# Run specific test types
+make syntax-check
+make lint
+make test-compose
+make test-files
+make test-secrets
+```
+
+### Testing Across Multiple Ansible Versions
+
+**Using Docker (Recommended - No local Ansible installation needed):**
+
+```bash
+# Test all Ansible versions sequentially
+make docker-test-all
+
+# Test all versions in parallel (much faster!)
+make -j4 docker-test-all-parallel
+
+# Test specific version
+make docker-test VERSION=9
+make docker-test VERSION=6
+
+# Clean up Docker images when done
+make docker-clean
+```
+
+**Using Virtual Environments:**
+
+Tests only versions compatible with your Python version:
+
+```bash
+# Test all compatible versions sequentially
+make test-all-versions
+
+# Test compatible versions in parallel
+make -j3 test-all-versions-parallel
+
+# Test specific version (if compatible with your Python)
+make test-ansible-version VERSION=9
+
+# Clean up virtual environments
+make clean-venvs
+```
+
+**Python/Ansible Compatibility Matrix:**
+- Python 3.12: ✅ Ansible 7, 8, 9
+- Python 3.11: ✅ Ansible 7, 8, 9
+- Python 3.10: ✅ Ansible 4, 5, 6, 7, 8, 9
+- Python 3.8-3.9: ✅ Ansible 2.9, 4, 5, 6, 7, 8, 9
+
+Virtual environment tests automatically skip incompatible versions. For complete version coverage regardless of your Python version, use Docker-based testing.
+
+**Performance tip:** Use `-j4` or `-j8` for parallel execution to speed up testing significantly!
+
 ### Run All Tests
 
 ```bash
@@ -81,7 +142,7 @@ yamllint .
 # Ansible linting
 ansible-lint
 
-# Both together
+# Both together (or use: make lint)
 yamllint . && ansible-lint
 ```
 
