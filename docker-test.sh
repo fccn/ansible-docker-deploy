@@ -26,11 +26,6 @@ run_test() {
     echo -e "${BLUE}Testing Ansible ${version} with Python ${python_ver}${NC}"
     echo -e "${BLUE}========================================${NC}"
     
-    # Use Python 3.8 for Ansible 2.9
-    if [ "$version" = "2.9" ]; then
-        python_ver="3.8"
-    fi
-    
     # Build the test image
     echo -e "${YELLOW}Building test image...${NC}"
     docker build \

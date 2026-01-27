@@ -5,6 +5,8 @@ exclude_paths:
   - .git/
   - .github/
   - tests/
+  - venv/
+  - venv-ansible-*/
 
 skip_list:
   - yaml[line-length]
