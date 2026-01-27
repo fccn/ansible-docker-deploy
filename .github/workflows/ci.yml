@@ -47,7 +47,6 @@ jobs:
     strategy:
       matrix:
         ansible-version:
-          - '2.9'
           - '4'   # ansible 4.x (includes ansible-core 2.11)
           - '5'   # ansible 5.x (includes ansible-core 2.12)
           - '6'   # ansible 6.x (includes ansible-core 2.13)
@@ -55,9 +54,6 @@ jobs:
           - '8'   # ansible 8.x (includes ansible-core 2.15)
           - '9'   # ansible 9.x (includes ansible-core 2.16)
           - 'latest'
-        include:
-          - ansible-version: '2.9'
-            python-version: '3.8'  # Ansible 2.9 requires Python <= 3.8
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -91,13 +87,10 @@ jobs:
     strategy:
       matrix:
         ansible-version:
-          - '2.9'    # Oldest supported version
+          - '4'      # Oldest supported version
           - '7'      # Mid-range version
           - '9'      # Recent stable version
           - 'latest' # Latest release
-        include:
-          - ansible-version: '2.9'
-            python-version: '3.8'  # Ansible 2.9 requires Python <= 3.8
     steps:
       - name: Check out code
         uses: actions/checkout@v4

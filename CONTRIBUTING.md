@@ -103,7 +103,7 @@ make clean-venvs
 - Python 3.12: ✅ Ansible 7, 8, 9
 - Python 3.11: ✅ Ansible 7, 8, 9
 - Python 3.10: ✅ Ansible 4, 5, 6, 7, 8, 9
-- Python 3.8-3.9: ✅ Ansible 2.9, 4, 5, 6, 7, 8, 9
+- Python 3.8-3.9: ✅ Ansible 4, 5, 6, 7, 8, 9
 
 Virtual environment tests automatically skip incompatible versions. For complete version coverage regardless of your Python version, use Docker-based testing.
 

@@ -101,20 +101,16 @@ test-ansible-version: ## Test with specific Ansible version (usage: make test-an
 	fi
 	@echo "Testing with Ansible $(VERSION)..."
 	@python_version=$$(python3 --version | awk '{print $$2}' | cut -d. -f1,2); \
-	if [ "$(VERSION)" = "2.9" ] || [ "$(VERSION)" = "4" ] || [ "$(VERSION)" = "5" ] || [ "$(VERSION)" = "6" ]; then \
+	if [ "$(VERSION)" = "4" ] || [ "$(VERSION)" = "5" ] || [ "$(VERSION)" = "6" ]; then \
 		if [ "$$(echo "$$python_version >= 3.11" | bc)" -eq 1 ]; then \
 			echo "WARNING: Ansible $(VERSION) is not compatible with Python $$python_version"; \
-			echo "Ansible 2.9-6 require Python <= 3.10. Skipping test."; \
+			echo "Ansible 4-6 require Python <= 3.10. Skipping test."; \
 			exit 0; \
 		fi; \
 	fi
 	python3 -m venv venv-ansible-$(VERSION)
 	./venv-ansible-$(VERSION)/bin/pip install --upgrade pip
-	@if [ "$(VERSION)" = "2.9" ]; then \
-		./venv-ansible-$(VERSION)/bin/pip install "ansible~=2.9.0"; \
-	else \
-		./venv-ansible-$(VERSION)/bin/pip install "ansible~=$(VERSION).0"; \
-	fi
+	./venv-ansible-$(VERSION)/bin/pip install "ansible~=$(VERSION).0"
 	./venv-ansible-$(VERSION)/bin/ansible --version
 	./venv-ansible-$(VERSION)/bin/ansible-galaxy collection install -r requirements.yml
 	printf '[defaults]\nroles_path=../' > ansible.cfg

@@ -418,7 +418,6 @@ make clean-venvs
 ```
 
 **Python/Ansible Compatibility:**
-- Ansible 2.9: Python ≤ 3.8
 - Ansible 4-6: Python 3.8 - 3.10
 - Ansible 7-8: Python 3.9 - 3.11
 - Ansible 9+: Python 3.10 - 3.12
@@ -468,7 +467,7 @@ molecule destroy
 This role includes a comprehensive GitHub Actions workflow that automatically:
 
 - Runs linting (yamllint, ansible-lint)
-- Tests syntax across multiple Ansible versions (2.9 - 2.16)
+- Tests syntax across multiple Ansible versions (4 - 9)
 - Executes integration tests
 - Runs Molecule tests
 - Notifies Ansible Galaxy on successful master branch builds
@@ -484,7 +483,7 @@ View the workflow in [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 - Docker and Docker Compose installed
 - Python 3.8+
-- Ansible 2.9+
+- Ansible 4.0+
 - ansible-lint and yamllint (for linting)
 - molecule and molecule-docker (for Molecule tests)
 

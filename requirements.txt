@@ -1,5 +1,5 @@
 # Python requirements for development and testing
-ansible>=2.9
+ansible>=4.0
 ansible-lint>=6.0.0
 yamllint>=1.26.0
 molecule>=5.0.0

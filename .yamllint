@@ -17,3 +17,4 @@ ignore: |
   .github/
   .git/
   venv/
+  venv-ansible-*/

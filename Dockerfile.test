@@ -13,12 +13,6 @@ RUN apt-get update && \
 
 WORKDIR /roles/ansible-docker-deploy
 
-FROM base as ansible-2.9
-RUN pip install --no-cache-dir "ansible~=2.9.0"
-# Copy role files after installation for better caching
-COPY . .
-RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
-
 FROM base as ansible-4
 # Copy only requirements.yml first for better layer caching
 COPY requirements.yml ./
