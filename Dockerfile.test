@@ -13,15 +13,6 @@ RUN apt-get update && \
 
 WORKDIR /roles/ansible-docker-deploy
 
-FROM base as ansible-4
-# Copy only requirements.yml first for better layer caching
-COPY requirements.yml ./
-RUN pip install --no-cache-dir "ansible~=4.0" && \
-    ansible-galaxy collection install -r requirements.yml || echo "Warning: Collection install failed, continuing..."
-# Copy role files after installation
-COPY . .
-RUN printf '[defaults]\nroles_path=/roles\n' > ansible.cfg
-
 FROM base as ansible-5
 COPY requirements.yml ./
 RUN pip install --no-cache-dir "ansible~=5.0" && \

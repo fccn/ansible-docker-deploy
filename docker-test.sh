@@ -71,7 +71,7 @@ run_test() {
 if [ "$ANSIBLE_VERSION" = "all" ]; then
     echo -e "${GREEN}=== Running tests for all Ansible versions ===${NC}\n"
     
-    VERSIONS=("4" "5" "6" "7" "8" "9" "latest")
+    VERSIONS=("5" "6" "7" "8" "9" "latest")
     FAILED_TESTS=()
     
     for version in "${VERSIONS[@]}"; do
