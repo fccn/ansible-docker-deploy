@@ -5,7 +5,7 @@
     state: present
   tags: docker_deploy
 
-- name: Download file from S3
+- name: Download file from S3  # noqa: command-instead-of-shell
   shell: "{{ s3cmd_prefix }} {{ item.src if item.src.startswith('s3://') else 's3://' + docker_deploy_s3_bucket + ('' if item.src.startswith('/') else '/') + item.src }} {{ item.dest }}"
   vars:
     s3cmd_prefix: s3cmd get --force {{ '--host ' + docker_deploy_s3_host + ' --host-bucket ' + docker_deploy_s3_bucket }}
