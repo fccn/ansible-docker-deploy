@@ -111,6 +111,16 @@ jobs:
 
       - name: Install Ansible collections
         run: |
+          cat > ansible.cfg << 'EOF'
+          [defaults]
+          roles_path=../
+          
+          [galaxy]
+          server_list = release_galaxy
+          
+          [galaxy_server.release_galaxy]
+          url = https://galaxy.ansible.com/
+          EOF
           ansible-galaxy collection install -r requirements.yml
 
       - name: Display Ansible version
