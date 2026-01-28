@@ -412,7 +412,7 @@ make docker-clean
 Tests only versions compatible with your current Python:
 - **Python 3.12**: Ansible 7, 8, 9
 - **Python 3.11**: Ansible 7, 8, 9
-- **Python 3.10 or older**: Ansible 4, 5, 6, 7, 8, 9
+- **Python 3.10 or older**: Ansible 5, 6, 7, 8, 9
 
 ```bash
 # Test all compatible versions sequentially
@@ -429,7 +429,7 @@ make clean-venvs
 ```
 
 **Python/Ansible Compatibility:**
-- Ansible 4-6: Python 3.8 - 3.10
+- Ansible 5-6: Python 3.8 - 3.10
 - Ansible 7-8: Python 3.9 - 3.11
 - Ansible 9+: Python 3.10 - 3.12
 
@@ -495,7 +495,7 @@ View the workflow in [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 - Docker and Docker Compose installed
 - Python 3.8+
-- Ansible 4.0+
+- Ansible 5.0+
 - ansible-lint and yamllint (for linting)
 - molecule and molecule-docker (for Molecule tests)
 

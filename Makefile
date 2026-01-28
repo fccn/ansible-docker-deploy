@@ -116,10 +116,10 @@ test-ansible-version: ## Test with specific Ansible version (usage: make test-an
 	fi
 	@echo "Testing with Ansible $(VERSION)..."
 	@python_version=$$(python3 --version | awk '{print $$2}' | cut -d. -f1,2); \
-	if [ "$(VERSION)" = "4" ] || [ "$(VERSION)" = "5" ] || [ "$(VERSION)" = "6" ]; then \
+	if [ "$(VERSION)" = "5" ] || [ "$(VERSION)" = "6" ]; then \
 		if [ "$$(echo "$$python_version >= 3.11" | bc)" -eq 1 ]; then \
 			echo "WARNING: Ansible $(VERSION) is not compatible with Python $$python_version"; \
-			echo "Ansible 4-6 require Python <= 3.10. Skipping test."; \
+			echo "Ansible 5-6 require Python <= 3.10. Skipping test."; \
 			exit 0; \
 		fi; \
 	fi
@@ -127,7 +127,14 @@ test-ansible-version: ## Test with specific Ansible version (usage: make test-an
 	./venv-ansible-$(VERSION)/bin/pip install --upgrade pip
 	./venv-ansible-$(VERSION)/bin/pip install "ansible~=$(VERSION).0"
 	./venv-ansible-$(VERSION)/bin/ansible --version
-	./venv-ansible-$(VERSION)/bin/ansible-galaxy collection install -r requirements.yml
+	@echo "Installing community.docker collection..."
+	@if [ "$(VERSION)" = "5" ]; then \
+		echo "Note: Using direct installation method for Ansible $(VERSION) due to Galaxy API compatibility"; \
+		./venv-ansible-$(VERSION)/bin/ansible-galaxy collection install community.docker || \
+		./venv-ansible-$(VERSION)/bin/pip install docker; \
+	else \
+		./venv-ansible-$(VERSION)/bin/ansible-galaxy collection install -r requirements.yml; \
+	fi
 	printf '[defaults]\nroles_path=../' > ansible.cfg
 	./venv-ansible-$(VERSION)/bin/ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 	@echo "Ansible $(VERSION) tests completed!"
@@ -140,8 +147,8 @@ test-all-versions: ## Test against all supported Ansible versions (compatible wi
 		echo "Python $$python_version detected: Testing Ansible 7, 8, 9 (compatible versions)"; \
 		versions="7 8 9"; \
 	else \
-		echo "Python $$python_version detected: Testing Ansible 4-9"; \
-		versions="4 5 6 7 8 9"; \
+		echo "Python $$python_version detected: Testing Ansible 5-9"; \
+		versions="5 6 7 8 9"; \
 	fi; \
 	for version in $$versions; do \
 		echo ""; \
@@ -155,10 +162,6 @@ test-all-versions: ## Test against all supported Ansible versions (compatible wi
 .PHONY: test-all-versions
 
 # Individual version targets for parallel execution
-test-ansible-4:
-	@$(MAKE) test-ansible-version VERSION=4
-.PHONY: test-ansible-4
-
 test-ansible-5:
 	@$(MAKE) test-ansible-version VERSION=5
 .PHONY: test-ansible-5
@@ -204,10 +207,6 @@ docker-test-all: ## Run tests in Docker for all Ansible versions
 .PHONY: docker-test-all
 
 # Individual Docker test targets for parallel execution
-docker-test-4:
-	@./docker-test.sh 4
-.PHONY: docker-test-4
-
 docker-test-5:
 	@./docker-test.sh 5
 .PHONY: docker-test-5
@@ -232,7 +231,7 @@ docker-test-latest:
 	@./docker-test.sh latest
 .PHONY: docker-test-latest
 
-docker-test-all-parallel: docker-test-4 docker-test-5 docker-test-6 docker-test-7 docker-test-8 docker-test-9 docker-test-latest ## Run Docker tests in parallel (use with make -j4)
+docker-test-all-parallel: docker-test-5 docker-test-6 docker-test-7 docker-test-8 docker-test-9 docker-test-latest ## Run Docker tests in parallel (use with make -j4)
 	@echo ""
 	@echo "All parallel Docker tests completed!"
 .PHONY: docker-test-all-parallel
