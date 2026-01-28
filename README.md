@@ -501,14 +501,17 @@ View the workflow in [.github/workflows/ci.yml](.github/workflows/ci.yml)
 
 ## License
 
-GPL-3.0-only
+[GNU General Public License v3.0](LICENSE)
 
 ## Author Information
 
-**Ivo Branco** - ivo.branco@fccn.pt
+Created and maintained by **Ivo Branco** at [FCCN](https://www.fccn.pt/).
 
-### Organizations
-- [FCT|FCCN](https://www.fccn.pt)
-- [Arquivo.pt](https://arquivo.pt)
-- [NAU](https://www.nau.edu.pt)
-- [Educast](https://educast.fccn.pt)
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+---
+
+**Repository**: [fccn/ansible-docker-deploy](https://github.com/fccn/ansible-docker-deploy)
+
