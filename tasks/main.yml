@@ -100,7 +100,7 @@
   include_tasks: stop_old.yml
   tags: docker_deploy
 
-- name: Check if community.docker.docker_compose_v2 module is available
+- name: Check if community.docker.docker_compose_v2 module is available  # noqa: key-order[task]
   block:
     - name: Try to load docker_compose_v2 module info
       ansible.builtin.command: ansible-doc -t module community.docker.docker_compose_v2

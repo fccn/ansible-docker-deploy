@@ -41,24 +41,39 @@ syntax-check: ## Run Ansible syntax check
 	ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 .PHONY: syntax-check
 
-test-all: test-compose test-files test-secrets ## Run all integration tests
+test-all: test-compose test-files test-secrets test-compose-v2 test-files-v2 test-secrets-v2 ## Run all integration tests (both shell and docker_compose_v2 modes)
 	@echo "All integration tests completed!"
 .PHONY: test-all
 
-test-compose: ## Run compose deployment test
-	@echo "Running compose deployment test..."
+test-compose: ## Run compose deployment test (shell mode)
+	@echo "Running compose deployment test (shell mode)..."
 	ansible-playbook tests/test-compose.yml -i tests/inventory -vv
 .PHONY: test-compose
 
-test-files: ## Run files and templates test
-	@echo "Running files and templates test..."
+test-files: ## Run files and templates test (shell mode)
+	@echo "Running files and templates test (shell mode)..."
 	ansible-playbook tests/test-files-templates.yml -i tests/inventory -vv
 .PHONY: test-files
 
-test-secrets: ## Run secrets and configs test
-	@echo "Running secrets and configs test..."
+test-secrets: ## Run secrets and configs test (shell mode)
+	@echo "Running secrets and configs test (shell mode)..."
 	ansible-playbook tests/test-secrets-configs.yml -i tests/inventory -vv
 .PHONY: test-secrets
+
+test-compose-v2: ## Run compose deployment test (docker_compose_v2 mode)
+	@echo "Running compose deployment test (docker_compose_v2 mode)..."
+	ansible-playbook tests/test-compose-v2.yml -i tests/inventory -vv
+.PHONY: test-compose-v2
+
+test-files-v2: ## Run files and templates test (docker_compose_v2 mode)
+	@echo "Running files and templates test (docker_compose_v2 mode)..."
+	ansible-playbook tests/test-files-templates-v2.yml -i tests/inventory -vv
+.PHONY: test-files-v2
+
+test-secrets-v2: ## Run secrets and configs test (docker_compose_v2 mode)
+	@echo "Running secrets and configs test (docker_compose_v2 mode)..."
+	ansible-playbook tests/test-secrets-configs-v2.yml -i tests/inventory -vv
+.PHONY: test-secrets-v2
 
 molecule: ## Run molecule tests
 	@echo "Running molecule tests..."

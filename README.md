@@ -357,22 +357,33 @@ ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
 The role includes a comprehensive test suite with multiple test scenarios:
 
-1. **test-compose.yml** - Tests basic Docker Compose deployment
-2. **test-files-templates.yml** - Tests file copying and template rendering
-3. **test-secrets-configs.yml** - Tests Docker secrets and configs functionality
+**Shell Mode Tests:**
+1. **test-compose.yml** - Tests basic Docker Compose deployment (shell mode)
+2. **test-files-templates.yml** - Tests file copying and template rendering (shell mode)
+3. **test-secrets-configs.yml** - Tests Docker secrets and configs functionality (shell mode)
+
+**docker_compose_v2 Module Tests:**
+4. **test-compose-v2.yml** - Tests basic Docker Compose deployment (docker_compose_v2 mode)
+5. **test-files-templates-v2.yml** - Tests file copying and template rendering (docker_compose_v2 mode)
+6. **test-secrets-configs-v2.yml** - Tests Docker secrets and configs functionality (docker_compose_v2 mode)
 
 #### Quick Start - Using Makefile
 
 ```bash
-# Run all tests
+# Run all tests (both shell and docker_compose_v2 modes)
 make test
 
-# Run specific test types
+# Run specific shell mode tests
 make syntax-check
 make lint
 make test-compose
 make test-files
 make test-secrets
+
+# Run specific docker_compose_v2 mode tests
+make test-compose-v2
+make test-files-v2
+make test-secrets-v2
 ```
 
 #### Testing with Multiple Ansible Versions
@@ -434,14 +445,15 @@ cd tests
 #### Running Individual Tests
 
 ```bash
-# Test compose deployment
+# Shell mode tests
 ansible-playbook tests/test-compose.yml -i tests/inventory -vv
-
-# Test files and templates
 ansible-playbook tests/test-files-templates.yml -i tests/inventory -vv
-
-# Test secrets and configs
 ansible-playbook tests/test-secrets-configs.yml -i tests/inventory -vv
+
+# docker_compose_v2 mode tests
+ansible-playbook tests/test-compose-v2.yml -i tests/inventory -vv
+ansible-playbook tests/test-files-templates-v2.yml -i tests/inventory -vv
+ansible-playbook tests/test-secrets-configs-v2.yml -i tests/inventory -vv
 ```
 
 ### Molecule Testing
