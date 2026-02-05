@@ -22,6 +22,10 @@
     state: directory
   tags: docker_deploy
 
+- name: Stop and remove old containers
+  include_tasks: stop_old.yml
+  tags: docker_deploy
+
 - name: Git
   include_tasks: git.yml
   tags: docker_deploy
@@ -94,10 +98,6 @@
 
 - name: Docker secrets
   include_tasks: docker_secrets.yml
-  tags: docker_deploy
-
-- name: Stop and remove old containers
-  include_tasks: stop_old.yml
   tags: docker_deploy
 
 - name: Check if community.docker.docker_compose_v2 module is available  # noqa: key-order[task]

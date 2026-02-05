@@ -339,6 +339,12 @@ Create a wrapper role that uses ansible-docker-deploy:
   when: not ansible_check_mode
 ```
 
+### Example 9: Stop previous container
+
+To stop a container before deploying the new compose, you can use something like:
+
+`-e '{"docker_containers_to_remove": ["redis"]}'`
+
 ## Testing
 
 ### Quick Syntax Check
