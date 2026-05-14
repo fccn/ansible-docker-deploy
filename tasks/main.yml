@@ -36,7 +36,7 @@
     owner: "{{ item.dir_owner | default(omit) }}"
     group: "{{ item.dir_group | default(omit) }}"
     mode: "{{ item.dir_mode | default(omit) }}"
-    recurse: true
+    recurse: "{{ item.recurse | default(omit) }}"
     state: directory
   loop_control:
     label: "{{ item.dest }}"
