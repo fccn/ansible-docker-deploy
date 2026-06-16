@@ -30,9 +30,19 @@
   include_tasks: git.yml
   tags: docker_deploy
 
-- name: Create folders
+- name: Create parent folders for files and templates
   file:
     dest: "{{ item.dest | dirname }}"
+    state: directory
+  loop_control:
+    label: "{{ item.dest | dirname }}"
+  when: item.when | default(true) | bool
+  with_items: "{{ docker_deploy_files + docker_deploy_templates + docker_deploy_git_repositories }}"
+  tags: docker_deploy
+
+- name: Create additional folders
+  file:
+    dest: "{{ item.dest }}"
     owner: "{{ item.dir_owner | default(omit) }}"
     group: "{{ item.dir_group | default(omit) }}"
     mode: "{{ item.dir_mode | default(omit) }}"
@@ -41,7 +51,7 @@
   loop_control:
     label: "{{ item.dest }}"
   when: item.when | default(true) | bool
-  with_items: "{{ docker_deploy_folders }}"
+  with_items: "{{ docker_deploy_folders_additional }}"
   tags: docker_deploy
 
 - name: Copy files
