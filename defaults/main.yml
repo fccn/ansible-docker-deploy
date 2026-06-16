@@ -29,5 +29,9 @@ docker_deploy_secrets: []
 docker_deploy_services: "{{ (((docker_deploy_templates + docker_deploy_files) | selectattr('service', 'defined') | map(attribute='service') | unique | list) + docker_deploy_services_additional) | sort }}"
 docker_deploy_services_additional: []
 
-# By default use the old style docker-compose command.
-docker_deploy_compose_bin: "docker-compose"
+# Docker Compose command used in shell mode.
+# "auto" (default) detects, on the target host, whether the new style
+# "docker compose" (v2 plugin) or the old style "docker-compose" (v1 standalone)
+# is available, preferring the new style. Set explicitly to "docker compose" or
+# "docker-compose" to skip detection and force a specific command.
+docker_deploy_compose_bin: "auto"

@@ -3,6 +3,41 @@
 #   docker_deploy_shell_start: deploy.sh
 #
 ---
+- name: Detect docker compose command (supports both new and old style)
+  when: docker_deploy_compose_bin == "auto"
+  block:
+    - name: Check for new style 'docker compose' (v2 plugin)
+      ansible.builtin.command: docker compose version
+      register: _docker_compose_v2_bin_check
+      changed_when: false
+      failed_when: false
+
+    - name: Check for old style 'docker-compose' (v1 standalone)
+      ansible.builtin.command: docker-compose version
+      register: _docker_compose_v1_bin_check
+      changed_when: false
+      failed_when: false
+      when: _docker_compose_v2_bin_check.rc != 0
+
+    - name: Fail when no docker compose command is available
+      ansible.builtin.fail:
+        msg: >-
+          Neither the new style 'docker compose' (v2 plugin) nor the old style
+          'docker-compose' (v1 standalone) is available on the target host.
+          Install one of them or set 'docker_deploy_compose_bin' explicitly.
+      when:
+        - _docker_compose_v2_bin_check.rc != 0
+        - _docker_compose_v1_bin_check.rc != 0
+
+    - name: Set docker compose command (prefer new style 'docker compose')
+      ansible.builtin.set_fact:
+        docker_deploy_compose_bin: "{{ 'docker compose' if _docker_compose_v2_bin_check.rc == 0 else 'docker-compose' }}"
+
+    - name: Show detected docker compose command
+      ansible.builtin.debug:
+        msg: "Using docker compose command: {{ docker_deploy_compose_bin }}"
+  tags: docker_deploy
+
 - name: Template docker-compose
   template:
     dest: "{{ docker_deploy_base_folder }}/docker-compose.yml"

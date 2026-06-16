@@ -77,6 +77,7 @@ For Docker Compose file format version 3.x or higher, set `docker_deploy_shell: 
 **Shell Mode Variables:**
 
 - **`docker_deploy_shell`** (default: `false`) - Enable shell command mode
+- **`docker_deploy_compose_bin`** (default: `auto`) - Docker Compose command. `auto` detects on the target host whether the new style `docker compose` (v2 plugin) or the old style `docker-compose` (v1 standalone) is available, preferring the new style. Set to `docker compose` or `docker-compose` to force a specific command.
 - **`docker_deploy_shell_start_default`** (default: `docker-compose pull && docker-compose build && docker-compose up -d`) - Default startup command
 - **`docker_deploy_shell_start_default_additional_parameters`** - Additional parameters always added to docker-compose commands
 - **`docker_deploy_shell_start_default_additional_parameters_if_changed`** - Parameters added only when files change (e.g., `--force-recreate`)
