@@ -1,6 +1,6 @@
 ---
 - name: Wait until docker health checks are healthy or ignore it if no docker healthcheck configured
-  shell: docker {% raw %} ps --format "{{.Status}}" | awk -F"[()]" '{print $2}' | awk 'NF' | sort | uniq{% endraw %}
+  shell: docker {% raw %} ps --filter "label=com.docker.compose.project={% endraw %}{{ _docker_deploy_name }}{% raw %}" --format "{{.Status}}" | awk -F"[()]" '{print $2}' | awk 'NF' | sort | uniq{% endraw %}
   register: docker_healthcheck_out
   until: docker_healthcheck_out.stdout is not defined or docker_healthcheck_out.stdout == 'healthy' or docker_healthcheck_out.stdout == ''
   retries: "{{ docker_deploy_healthcheck_retries | default(20) }}"
