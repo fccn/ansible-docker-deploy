@@ -1,9 +1,10 @@
 ---
 - name: Stop and remove old docker containers
-  docker_container:
-    name: "{{ item }}"
-    state: absent
+  command: docker rm -f {{ item }}
   with_items: "{{ docker_containers_to_remove | default([]) }}"
+  register: docker_remove_result
+  changed_when: docker_remove_result.rc == 0
+  failed_when: docker_remove_result.rc not in [0, 1]
   tags: docker_deploy
 
 - name: Stop and remove old docker services  # noqa: command-instead-of-shell
