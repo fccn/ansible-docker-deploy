@@ -21,6 +21,21 @@ Docker configs and secrets are **immutable** — once created, they cannot be up
 
 Old configs/secrets are automatically cleaned up by `docker_clean.yml` after each deployment.
 
+## Recommendation: use Docker configs for application config files
+
+For files that represent application configuration (for example `config.py`, `nginx.conf`, framework settings files), prefer Docker `configs` via `config_name` + helper macros instead of compose bind mounts like `./config.py:/app/config.py:ro`.
+
+Why:
+
+- Bind mounts reference a stable host path and do not create a new immutable config object identity when content changes.
+- Checksum-based Docker configs generate a new name on content updates, which makes compose/service reconciliation explicit and reliable.
+- Deploys become reproducible and auditable because mounted config names encode content version.
+- Role cleanup removes obsolete config versions automatically.
+
+Use bind mounts for mutable data directories (logs/state/cache), not for versioned app config.
+
+Example in this repository: `roles/memorial_docker_deploy/` mounts `config.py` via `config_name` + helper macros (`service_configs` + `configs`) instead of a compose bind mount, so config changes produce a new checksum-backed Docker config name.
+
 ## Setting up a config
 
 Add `config_name`, `service`, and `docker_target` to a template or file entry:
